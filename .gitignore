@@ -1,0 +1,11 @@
+node_modules
+.next
+out
+.vercel
+.env*.local
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+.claude
+# licensed fonts, fetched at build time (see scripts/fetch-fonts.mjs)
+Font

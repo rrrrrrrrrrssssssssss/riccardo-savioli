@@ -1,0 +1,124 @@
+/* Measures from the InDesign layout (1920 × 1080 px page). */
+:root {
+  --fg: #000;
+  --bg: #fff;
+  --muted: #b2b2b2;
+  --margin: 5px;
+  --text-size: 20.16px;
+  --text-leading: 22.4px;
+  --text-scale: 0.95; /* InDesign horizontal scale 95% */
+  --caption-size: 13.44px;
+  --caption-scale: 0.9;
+  --tracking: 0.05em; /* InDesign tracking 50 */
+  --image-height: 294px;
+  --open-duration: 600ms;
+  --ease: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-unica), "Helvetica Neue", Arial, sans-serif;
+  font-size: var(--text-size);
+  line-height: var(--text-leading);
+  letter-spacing: var(--tracking);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--muted);
+}
+
+button {
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.bio {
+  padding: var(--margin);
+  overflow-x: clip; /* scaled lines keep their unscaled layout width */
+}
+
+/* Horizontal scale: squeeze each text line, widening it so wrapping still uses the full width. */
+.line,
+.caption {
+  transform-origin: left top;
+}
+
+.line {
+  width: calc(100% / var(--text-scale));
+  transform: scaleX(var(--text-scale));
+}
+
+/* Project lines */
+.title:hover,
+.project.is-open .title,
+.nav:hover {
+  color: var(--muted);
+}
+
+.count {
+  margin-left: 1.25em;
+}
+
+.nav {
+  margin-left: 1em;
+}
+
+/* Carousel panel: animates open, pushing the following text down. */
+.panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--open-duration) var(--ease);
+}
+
+.project.is-open .panel {
+  grid-template-rows: 1fr;
+}
+
+.panel-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+figure {
+  padding-top: 4px;
+}
+
+figure img {
+  display: block;
+  height: var(--image-height);
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: left;
+  cursor: pointer;
+}
+
+.caption {
+  font-size: var(--caption-size);
+  line-height: var(--caption-size);
+  padding-top: 5px;
+  width: calc(100% / var(--caption-scale));
+  transform: scaleX(var(--caption-scale));
+}
