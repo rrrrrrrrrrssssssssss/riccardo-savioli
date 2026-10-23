@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Block, Project } from "@/lib/content";
+import { Scramble, ScrambleClock } from "./Scramble";
 
 export default function Bio({ blocks }: { blocks: Block[] }) {
   const [open, setOpen] = useState<{ slug: string; index: number } | null>(null);
@@ -26,33 +27,48 @@ export default function Bio({ blocks }: { blocks: Block[] }) {
   });
 
   return (
-    <main className="bio">
-      {blocks.map((b, i) => {
-        if (b.type === "text") return <p key={i} className="line">{b.text}</p>;
-        if (b.type === "contact")
+    <ScrambleClock>
+      <main className="bio">
+        {blocks.map((b, i) => {
+          if (b.type === "text")
+            return (
+              <p key={i} className="line">
+                <Scramble text={b.text} />
+              </p>
+            );
+          if (b.type === "contact")
+            return (
+              <p key={i} className="line">
+                <Scramble text="You can contact him at " />
+                <a href={`mailto:${b.email}`}>
+                  <Scramble text={b.email} />
+                </a>
+                <Scramble text=" or " />
+                <a
+                  href={`https://www.instagram.com/${b.instagram}/`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Scramble text={`@${b.instagram}`} />
+                </a>
+                <Scramble text={`. His VAT number is ${b.vat}.`} />
+              </p>
+            );
+          const isOpen = open?.slug === b.slug;
           return (
-            <p key={i} className="line">
-              You can contact him at <a href={`mailto:${b.email}`}>{b.email}</a> or{" "}
-              <a href={`https://www.instagram.com/${b.instagram}/`} target="_blank" rel="noreferrer">
-                @{b.instagram}
-              </a>
-              . His VAT number is {b.vat}.
-            </p>
+            <ProjectLine
+              key={b.slug}
+              label={b.label}
+              project={b.project}
+              isOpen={isOpen}
+              index={isOpen ? open.index : 0}
+              onToggle={() => setOpen(isOpen ? null : { slug: b.slug, index: 0 })}
+              onStep={step}
+            />
           );
-        const isOpen = open?.slug === b.slug;
-        return (
-          <ProjectLine
-            key={b.slug}
-            label={b.label}
-            project={b.project}
-            isOpen={isOpen}
-            index={isOpen ? open.index : 0}
-            onToggle={() => setOpen(isOpen ? null : { slug: b.slug, index: 0 })}
-            onStep={step}
-          />
-        );
-      })}
-    </main>
+        })}
+      </main>
+    </ScrambleClock>
   );
 }
 
@@ -84,13 +100,19 @@ function ProjectLine({
     <div className={`project${isOpen ? " is-open" : ""}`}>
       <p className="line">
         <button className="title" onClick={onToggle} aria-expanded={isOpen}>
-          {label}
-          <span className="count">{isOpen ? `(${index + 1}/ ${total})` : `(${total})`}</span>
+          <Scramble text={label} />
+          <span className="count">
+            <Scramble text={isOpen ? `(${index + 1}/ ${total})` : `(${total})`} />
+          </span>
         </button>
         {isOpen && total > 1 && (
           <>
-            <button className="nav" onClick={() => onStep(-1)}>Back</button>
-            <button className="nav" onClick={() => onStep(1)}>Next</button>
+            <button className="nav" onClick={() => onStep(-1)}>
+              Back
+            </button>
+            <button className="nav" onClick={() => onStep(1)}>
+              Next
+            </button>
           </>
         )}
       </p>

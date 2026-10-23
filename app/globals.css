@@ -123,3 +123,13 @@ figure img {
   width: calc(100% / var(--caption-scale));
   transform: scaleX(var(--caption-scale));
 }
+
+/* Real text for screen readers and search engines while the landing scramble runs. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
