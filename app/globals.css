@@ -4,10 +4,11 @@
   --bg: #fff;
   --muted: #b2b2b2;
   --margin: 5px;
-  --text-size: 20.16px;
-  --text-leading: 22.4px;
+  --text-size: 15.16px; /* layout: 20.16px, reduced by 5px */
+  --text-leading: 17.4px; /* layout: 22.4px, reduced by 5px */
   --text-scale: 0.95; /* InDesign horizontal scale 95% */
-  --caption-size: 13.44px;
+  --caption-size: 8.44px; /* layout: 13.44px, reduced by 5px */
+  --caption-leading: 8.44px; /* layout: 13.44px, reduced by 5px */
   --caption-scale: 0.9;
   --tracking: 0.05em; /* InDesign tracking 50 */
   --image-height: 294px;
@@ -117,7 +118,7 @@ figure img {
 
 .caption {
   font-size: var(--caption-size);
-  line-height: var(--caption-size);
+  line-height: var(--caption-leading);
   padding-top: 5px;
   width: calc(100% / var(--caption-scale));
   transform: scaleX(var(--caption-scale));
