@@ -4,7 +4,7 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 
 const REPO = "rrrrrrrrrrssssssssss/riccardo-savioli-fonts";
-const FILES = ["Unica77LL-Regular.otf", "Unica77LL-RegularItalic.otf"];
+const FILES = ["Unica77LL-Regular.woff2", "Unica77LL-RegularItalic.woff2"];
 
 const missing = FILES.filter((f) => !existsSync(`Font/${f}`));
 if (missing.length === 0) process.exit(0);

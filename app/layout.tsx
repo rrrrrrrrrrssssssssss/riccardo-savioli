@@ -4,8 +4,8 @@ import "./globals.css";
 
 const unica = localFont({
   src: [
-    { path: "../Font/Unica77LL-Regular.otf", weight: "400", style: "normal" },
-    { path: "../Font/Unica77LL-RegularItalic.otf", weight: "400", style: "italic" },
+    { path: "../Font/Unica77LL-Regular.woff2", weight: "400", style: "normal" },
+    { path: "../Font/Unica77LL-RegularItalic.woff2", weight: "400", style: "italic" },
   ],
   variable: "--font-unica",
 });
