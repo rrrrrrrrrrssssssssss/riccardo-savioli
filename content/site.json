@@ -177,6 +177,34 @@
     }
   ],
   "projects": {
+    "alessi": {
+      "caption": "Project made in collaboration with Studio Temp. Alessi team: Denise Mucera, Carlo Gasparini, Emanuele Sartori, Laura Kolupanowicz, Sophie Thomas, Massimiliano Sanfelici. May 024.",
+      "images": []
+    },
+    "asif": {
+      "caption": "",
+      "images": []
+    },
+    "alias": {
+      "caption": "",
+      "images": []
+    },
+    "skylrk": {
+      "caption": "",
+      "images": []
+    },
+    "aldo": {
+      "caption": "",
+      "images": []
+    },
+    "virgil-abloh-the-codes": {
+      "caption": "",
+      "images": []
+    },
+    "martisor": {
+      "caption": "",
+      "images": []
+    },
     "centolire-multitools": {
       "caption": "Project realized in collaboration with Nicolò Oriani. Supported by QuadroDesign. First edition of 100. 100 × 130 mm, 512 p. Printed in May 025.",
       "images": [
@@ -256,6 +284,58 @@
           "height": 1358
         }
       ]
+    },
+    "c41-magazine": {
+      "caption": "",
+      "images": []
+    },
+    "acerbis": {
+      "caption": "",
+      "images": []
+    },
+    "american-haiku": {
+      "caption": "",
+      "images": []
+    },
+    "alessi-abloh-conversational-objects": {
+      "caption": "",
+      "images": []
+    },
+    "ernest-w-baker-calendar-2023": {
+      "caption": "",
+      "images": []
+    },
+    "materia": {
+      "caption": "",
+      "images": []
+    },
+    "volume-i-cc-tapis": {
+      "caption": "",
+      "images": []
+    },
+    "identita-oltre-il-tempo": {
+      "caption": "",
+      "images": []
+    },
+    "luca-a-caizzi-archive-system": {
+      "caption": "",
+      "images": []
+    },
+    "radar-ep-antimonio": {
+      "caption": "",
+      "images": []
+    },
+    "giacomo-moor-studio": {
+      "caption": "",
+      "images": []
+    },
+    "quadro-design": {
+      "caption": "",
+      "images": []
+    },
+    "foa": {
+      "caption": "",
+      "images": []
     }
   }
 }
