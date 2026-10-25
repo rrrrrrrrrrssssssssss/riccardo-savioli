@@ -202,3 +202,43 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Collapsible projects */
+.expand-all {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.toggle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 15px;
+}
+
+.toggle .arrow {
+  display: inline-block;
+  width: 1.2em;
+}
+
+.toggle .count {
+  color: var(--muted);
+}
+
+.row-project .row-tools {
+  margin-bottom: 8px;
+}
+
+/* Drag and drop of photos onto a project */
+.row-project.is-drop {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.add-photos span {
+  text-align: center;
+}

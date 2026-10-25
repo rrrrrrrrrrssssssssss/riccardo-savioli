@@ -35,6 +35,28 @@ export default function Editor({
   const [dirty, setDirty] = useState(false);
   const [status, setStatus] = useState<{ text: string; error?: boolean } | null>(null);
   const [saving, setSaving] = useState(false);
+  // Projects are collapsed by default; these slugs are open.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
+
+  const setOpen = (slug: string, open: boolean) =>
+    setExpanded((s) => {
+      const next = new Set(s);
+      if (open) next.add(slug);
+      else next.delete(slug);
+      return next;
+    });
+
+  // A photo dropped outside a project must not make the browser open it and leave the admin.
+  useEffect(() => {
+    const block = (e: DragEvent) => e.preventDefault();
+    window.addEventListener("dragover", block);
+    window.addEventListener("drop", block);
+    return () => {
+      window.removeEventListener("dragover", block);
+      window.removeEventListener("drop", block);
+    };
+  }, []);
 
   useEffect(() => {
     if (!dirty) return;
@@ -81,6 +103,7 @@ export default function Editor({
   const newProject = (label: string): RawBlock => {
     const slug = `p-${randomName()}`;
     setProjects((ps) => ({ ...ps, [slug]: { caption: "", images: [] } }));
+    setOpen(slug, true);
     return { type: "project", slug, label };
   };
 
@@ -202,20 +225,70 @@ export default function Editor({
 
       <p className="hint">
         Ogni riga del sito è un blocco. Un blocco <strong>Progetto</strong> va sempre a capo e apre
-        le sue foto; il numero tra parentesi è il numero di foto.
+        le sue foto; il numero tra parentesi è il numero di foto. Puoi trascinare le foto su un
+        progetto, anche se è chiuso.
       </p>
+      <div className="expand-all">
+        <button
+          onClick={() =>
+            setExpanded(
+              new Set(rows.flatMap((r) => (r.block.type === "project" ? [r.block.slug] : []))),
+            )
+          }
+        >
+          Apri tutti i progetti
+        </button>
+        <button onClick={() => setExpanded(new Set())}>Chiudi tutti</button>
+      </div>
 
       <ol className="rows">
         {rows.map((row, i) => {
           const b = row.block;
+          const isOpen = b.type === "project" && expanded.has(b.slug);
+          const drop =
+            b.type === "project"
+              ? {
+                  onDragOver: (e: React.DragEvent) => {
+                    if (!e.dataTransfer.types.includes("Files")) return;
+                    e.preventDefault();
+                    setDropTarget(b.slug);
+                  },
+                  onDragLeave: (e: React.DragEvent) => {
+                    if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropTarget(null);
+                  },
+                  onDrop: (e: React.DragEvent) => {
+                    e.preventDefault();
+                    setDropTarget(null);
+                    if (e.dataTransfer.files.length) {
+                      setOpen(b.slug, true);
+                      addPhotos(b.slug, e.dataTransfer.files);
+                    }
+                  },
+                }
+              : {};
           return (
-            <li key={row.id} className={`row row-${b.type}`}>
+            <li
+              key={row.id}
+              className={`row row-${b.type}${b.type === "project" && dropTarget === b.slug ? " is-drop" : ""}`}
+              {...drop}
+            >
               <div className="row-tools">
                 {b.type === "contact" ? (
                   <span className="kind">Contatti</span>
                 ) : (
                   <button className="kind" onClick={() => toggleType(row)} title="Cambia tipo">
                     {b.type === "text" ? "Testo" : "Progetto"} ⇄
+                  </button>
+                )}
+                {b.type === "project" && (
+                  <button
+                    className="toggle"
+                    onClick={() => setOpen(b.slug, !isOpen)}
+                    aria-expanded={isOpen}
+                  >
+                    <span className="arrow">{isOpen ? "▾" : "▸"}</span>
+                    {b.label || "Senza titolo"}{" "}
+                    <span className="count">({projects[b.slug]?.images.length ?? 0})</span>
                   </button>
                 )}
                 <span className="spacer" />
@@ -280,7 +353,7 @@ export default function Editor({
                 </div>
               )}
 
-              {b.type === "project" && (
+              {b.type === "project" && isOpen && (
                 <ProjectEditor
                   label={b.label}
                   project={projects[b.slug] ?? { caption: "", images: [] }}
@@ -386,7 +459,10 @@ function ProjectEditor({
           </figure>
         ))}
         <label className="add-photos">
-          + Aggiungi foto
+          <span>
+            + Aggiungi foto
+            <br />o trascinale qui
+          </span>
           <input
             type="file"
             accept="image/*"
