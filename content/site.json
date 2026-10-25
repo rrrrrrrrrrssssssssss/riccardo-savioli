@@ -179,7 +179,13 @@
   "projects": {
     "alessi": {
       "caption": "Project made in collaboration with Studio Temp. Alessi team: Denise Mucera, Carlo Gasparini, Emanuele Sartori, Laura Kolupanowicz, Sophie Thomas, Massimiliano Sanfelici. May 024.",
-      "images": []
+      "images": [
+        {
+          "src": "/projects/alessi/mvntujhdhm1f.jpg",
+          "width": 2400,
+          "height": 1980
+        }
+      ]
     },
     "asif": {
       "caption": "",
