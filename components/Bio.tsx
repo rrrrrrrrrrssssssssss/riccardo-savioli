@@ -120,14 +120,29 @@ function ProjectLine({
         <div className="panel-inner">
           {mounted && image && (
             <figure>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={image.src}
-                width={image.width}
-                height={image.height}
-                alt={`${label} — ${index + 1}/${total}`}
-                onClick={() => onStep(1)}
-              />
+              {image.video ? (
+                <video
+                  key={image.src}
+                  src={image.src}
+                  width={image.width}
+                  height={image.height}
+                  muted
+                  loop
+                  autoPlay
+                  playsInline
+                  aria-label={`${label} — ${index + 1}/${total}`}
+                  onClick={() => onStep(1)}
+                />
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={image.src}
+                  width={image.width}
+                  height={image.height}
+                  alt={`${label} — ${index + 1}/${total}`}
+                  onClick={() => onStep(1)}
+                />
+              )}
               {project.caption && <figcaption className="caption">{project.caption}</figcaption>}
             </figure>
           )}

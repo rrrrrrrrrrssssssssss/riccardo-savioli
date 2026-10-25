@@ -115,7 +115,8 @@ figure {
   padding-top: 4px;
 }
 
-figure img {
+figure img,
+figure video {
   display: block;
   height: var(--image-height);
   width: auto;

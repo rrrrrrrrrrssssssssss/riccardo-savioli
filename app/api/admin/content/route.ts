@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import type { Site } from "@/lib/content";
 import { commitSite, readSite } from "@/lib/github";
 
-// Photos live in public/projects/<slug>/<file>.jpg and are referenced as /projects/<slug>/<file>.jpg.
-const PHOTO = /^public\/projects\/[a-z0-9-]+\/[a-z0-9-]+\.jpg$/;
+// Photos and videos live in public/projects/<slug>/<file>.<ext> and are referenced as /projects/<slug>/<file>.<ext>.
+const PHOTO = /^public\/projects\/[a-z0-9-]+\/[a-z0-9-]+\.(jpg|webp|mp4)$/;
 
 export async function GET() {
   try {

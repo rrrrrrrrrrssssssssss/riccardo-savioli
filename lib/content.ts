@@ -1,6 +1,7 @@
 import site from "@/content/site.json";
 
-export type Image = { src: string; width: number; height: number };
+// A carousel item: a photo, or a silent looping video when `video` is true.
+export type Image = { src: string; width: number; height: number; video?: boolean };
 
 export type Project = { caption: string; images: Image[] };
 

@@ -2,14 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Image, Project, RawBlock, Site } from "@/lib/content";
+import { ACCEPT, convert, isMedia } from "@/lib/media";
 
 // A photo uploaded in this session but not saved yet: its blob is on GitHub, shown from a local preview.
 type EditorImage = Image & { pending?: { sha: string; preview: string } };
 type EditorProject = { caption: string; images: EditorImage[] };
 type Row = { id: number; block: RawBlock };
-
-const MAX_SIDE = 2400; // photos are resized to this long side before upload
-const JPEG_QUALITY = 0.85;
 
 let nextId = 0;
 const toRow = (block: RawBlock): Row => ({ id: nextId++, block });
@@ -32,6 +30,7 @@ export default function Editor({
     new Set(Object.values(initialSite.projects).flatMap((p) => p.images.map((i) => i.src))),
   );
   const [uploading, setUploading] = useState(0);
+  const [progress, setProgress] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [status, setStatus] = useState<{ text: string; error?: boolean } | null>(null);
   const [saving, setSaving] = useState(false);
@@ -130,29 +129,36 @@ export default function Editor({
   };
 
   const addPhotos = async (slug: string, files: FileList) => {
-    const list = [...files].filter((f) => f.type.startsWith("image/"));
+    const all = [...files];
+    const list = all.filter(isMedia);
+    if (list.length < all.length) {
+      setStatus({ text: "Alcuni file non sono foto o video e sono stati ignorati.", error: true });
+    }
     setUploading((n) => n + list.length);
     for (const file of list) {
       try {
-        const { base64, width, height, preview } = await resize(file);
-        const res = await fetch("/api/admin/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ data: base64 }),
-        });
+        setProgress(`Conversione di ${file.name}…`);
+        const { blob, ext, width, height, video } = await convert(file, (p) =>
+          setProgress(`Conversione di ${file.name}: ${Math.round(p * 100)}%`),
+        );
+        setProgress(`Caricamento di ${file.name}…`);
+        const res = await fetch("/api/admin/upload", { method: "POST", body: blob });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error);
         const image: EditorImage = {
-          src: `/projects/${slug}/${randomName()}.jpg`,
+          src: `/projects/${slug}/${randomName()}.${ext}`,
           width,
           height,
-          pending: { sha: json.sha, preview },
+          ...(video && { video }),
+          pending: { sha: json.sha, preview: URL.createObjectURL(blob) },
         };
         updateProject(slug, (p) => ({ ...p, images: [...p.images, image] }));
       } catch (e) {
-        setStatus({ text: `Caricamento di ${file.name} non riuscito: ${String(e)}`, error: true });
+        const message = e instanceof Error ? e.message : String(e);
+        setStatus({ text: `${file.name} non caricato: ${message}`, error: true });
       } finally {
         setUploading((n) => n - 1);
+        setProgress(null);
       }
     }
   };
@@ -169,7 +175,7 @@ export default function Editor({
       const p = projects[slug] ?? { caption: "", images: [] };
       kept[slug] = {
         caption: p.caption,
-        images: p.images.map(({ src, width, height }) => ({ src, width, height })),
+        images: p.images.map(({ pending, ...image }) => image),
       };
       for (const img of p.images)
         if (img.pending) added.push({ path: `public${img.src}`, sha: img.pending.sha });
@@ -211,7 +217,7 @@ export default function Editor({
         </button>
         <span className={status?.error ? "status error" : "status"}>
           {uploading > 0
-            ? `Caricamento di ${uploading} foto…`
+            ? (progress ?? `Caricamento di ${uploading} file…`)
             : (status?.text ?? (dirty ? "Modifiche non salvate" : ""))}
         </span>
         <span className="spacer" />
@@ -225,8 +231,9 @@ export default function Editor({
 
       <p className="hint">
         Ogni riga del sito è un blocco. Un blocco <strong>Progetto</strong> va sempre a capo e apre
-        le sue foto; il numero tra parentesi è il numero di foto. Puoi trascinare le foto su un
-        progetto, anche se è chiuso.
+        le sue foto; il numero tra parentesi è il numero di foto. Puoi trascinare foto e video su un
+        progetto, anche se è chiuso: vengono convertiti e ridimensionati per il web. I video sono
+        senza audio e in loop.
       </p>
       <div className="expand-all">
         <button
@@ -434,7 +441,11 @@ function ProjectEditor({
         {project.images.map((img, i) => (
           <figure key={i}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={photoUrl(img)} alt="" loading="lazy" />
+            {img.video ? (
+              <video src={photoUrl(img)} muted loop autoPlay playsInline />
+            ) : (
+              <img src={photoUrl(img)} alt="" loading="lazy" />
+            )}
             <figcaption>
               <button onClick={() => movePhoto(i, -1)} disabled={i === 0} title="Sposta a sinistra">
                 ←
@@ -460,12 +471,12 @@ function ProjectEditor({
         ))}
         <label className="add-photos">
           <span>
-            + Aggiungi foto
+            + Aggiungi foto o video
             <br />o trascinale qui
           </span>
           <input
             type="file"
-            accept="image/*"
+            accept={ACCEPT}
             multiple
             onChange={(e) => {
               if (e.target.files?.length) onAddPhotos(e.target.files);
@@ -476,30 +487,4 @@ function ProjectEditor({
       </div>
     </div>
   );
-}
-
-// Resizes a photo to at most MAX_SIDE px and encodes it as JPEG, so uploads stay small.
-async function resize(file: File) {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
-  const width = Math.round(bitmap.width * scale);
-  const height = Math.round(bitmap.height * scale);
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, width, height);
-  bitmap.close();
-
-  const blob = await new Promise<Blob>((resolve, reject) =>
-    canvas.toBlob(
-      (b) => (b ? resolve(b) : reject(new Error("Conversione non riuscita"))),
-      "image/jpeg",
-      JPEG_QUALITY,
-    ),
-  );
-  const bytes = new Uint8Array(await blob.arrayBuffer());
-  let binary = "";
-  for (let i = 0; i < bytes.length; i += 0x8000)
-    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return { base64: btoa(binary), width, height, preview: URL.createObjectURL(blob) };
 }

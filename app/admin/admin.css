@@ -164,7 +164,8 @@
   width: 140px;
 }
 
-.photos img {
+.photos img,
+.photos video {
   display: block;
   width: 140px;
   height: 100px;
