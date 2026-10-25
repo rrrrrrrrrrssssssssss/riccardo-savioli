@@ -3,6 +3,7 @@
   --fg: #000;
   --bg: #fff;
   --muted: #b2b2b2;
+  --accent: #f00; /* hover on contacts, Back and Next */
   --margin: 5px;
   --text-size: 15.16px; /* layout: 20.16px, reduced by 5px */
   --text-leading: 17.4px; /* layout: 22.4px, reduced by 5px */
@@ -42,7 +43,7 @@ a {
 }
 
 a:hover {
-  color: var(--muted);
+  color: var(--accent);
 }
 
 button {
@@ -71,11 +72,19 @@ button {
   transform: scaleX(var(--text-scale));
 }
 
-/* Project lines */
-.title:hover,
-.project.is-open .title,
-.nav:hover {
+/* Project lines (a project without photos stays plain text) */
+.title:disabled {
+  color: inherit;
+  cursor: default;
+}
+
+.title:not(:disabled):hover,
+.project.is-open .title {
   color: var(--muted);
+}
+
+.nav:hover {
+  color: var(--accent);
 }
 
 .count {

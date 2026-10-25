@@ -99,7 +99,7 @@ function ProjectLine({
   return (
     <div className={`project${isOpen ? " is-open" : ""}`}>
       <p className="line">
-        <button className="title" onClick={onToggle} aria-expanded={isOpen}>
+        <button className="title" onClick={onToggle} aria-expanded={isOpen} disabled={total === 0}>
           <Scramble text={label} />
           <span className="count">
             <Scramble text={isOpen ? `(${index + 1}/ ${total})` : `(${total})`} />

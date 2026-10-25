@@ -1,0 +1,204 @@
+/* Admin: a plain editing tool, independent from the site's type settings. */
+.admin {
+  --line: #ddd;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 16px 80px;
+  font-size: 15px;
+  line-height: 1.4;
+  letter-spacing: normal;
+}
+
+.admin input,
+.admin textarea {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 6px 8px;
+  font: inherit;
+  letter-spacing: normal;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--bg);
+  color: var(--fg);
+  resize: vertical;
+}
+
+.admin input:focus,
+.admin textarea:focus {
+  outline: none;
+  border-color: var(--fg);
+}
+
+.admin button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.admin button:not(:disabled):hover,
+.admin a:hover {
+  color: var(--accent);
+}
+
+.admin .error {
+  color: var(--accent);
+}
+
+.admin .spacer {
+  flex: 1;
+}
+
+/* Login */
+.admin.login {
+  max-width: 320px;
+  padding-top: 30vh;
+}
+
+.login form {
+  display: grid;
+  gap: 12px;
+}
+
+.login button {
+  justify-self: start;
+}
+
+/* Top bar */
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--fg);
+}
+
+.primary {
+  padding: 4px 14px;
+  border: 1px solid var(--fg) !important;
+}
+
+.status {
+  color: var(--muted);
+}
+
+.status.error {
+  color: var(--accent);
+}
+
+.hint {
+  margin: 16px 0;
+  color: #666;
+}
+
+/* Rows */
+.rows {
+  list-style: none;
+}
+
+.row {
+  padding: 10px 0 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.row-tools,
+.insert {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.row-tools {
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.kind {
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.row-project {
+  background: #f6f6f6;
+  margin: 0 -10px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.insert {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.row:not(:hover) .insert {
+  visibility: hidden;
+}
+
+.fields,
+.project-fields {
+  display: grid;
+  gap: 10px;
+}
+
+.fields {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.project-fields .count {
+  color: var(--muted);
+}
+
+/* Photos */
+.photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.photos figure {
+  width: 140px;
+}
+
+.photos img {
+  display: block;
+  width: 140px;
+  height: 100px;
+  object-fit: contain;
+  background: #e8e8e8;
+}
+
+.photos figcaption {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.add-photos {
+  display: grid;
+  place-items: center;
+  width: 140px;
+  height: 100px;
+  border: 1px dashed var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.add-photos:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.add-photos input {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .fields {
+    grid-template-columns: 1fr;
+  }
+}

@@ -9,21 +9,19 @@ export type Block =
   | { type: "project"; slug: string; label: string; project: Project }
   | { type: "contact"; email: string; instagram: string; vat: string };
 
-type RawBlock =
+// Shape of content/site.json, which the admin edits.
+export type RawBlock =
   | { type: "text"; text: string }
   | { type: "project"; slug: string; label: string }
   | { type: "contact"; email: string; instagram: string; vat: string };
 
-// Temporary: projects without content get 15 copies of the one available image,
-// so every line has a working carousel until the admin is in place.
-const PLACEHOLDER: Project = {
-  caption: "Project caption placeholder.",
-  images: Array(15).fill({ src: "/projects/centolire/01.jpg", width: 2400, height: 1358 }),
-};
+export type Site = { blocks: RawBlock[]; projects: Record<string, Project> };
+
+const EMPTY: Project = { caption: "", images: [] };
 
 export function getBlocks(): Block[] {
-  const projects = site.projects as Record<string, Project>;
-  return (site.blocks as RawBlock[]).map((b) =>
-    b.type === "project" ? { ...b, project: projects[b.slug] ?? PLACEHOLDER } : b,
+  const { blocks, projects } = site as Site;
+  return blocks.map((b) =>
+    b.type === "project" ? { ...b, project: projects[b.slug] ?? EMPTY } : b,
   );
 }
