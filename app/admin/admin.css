@@ -1,10 +1,10 @@
-/* Admin: a plain editing tool, independent from the site's type settings. */
+/* Admin: same typeface as the site (inherited from <html>), a quieter editing interface. */
 .admin {
-  --line: #ddd;
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 0 16px 80px;
-  font-size: 15px;
+  --line: #e4e4e4;
+  --soft: #f5f5f5;
+  --ink-2: #707070;
+  --bar: 52px;
+  font-size: 14px;
   line-height: 1.4;
   letter-spacing: normal;
 }
@@ -13,14 +13,13 @@
 .admin textarea {
   display: block;
   width: 100%;
-  margin-top: 4px;
-  padding: 6px 8px;
+  padding: 8px 10px;
   font: inherit;
   letter-spacing: normal;
+  color: var(--fg);
+  background: var(--bg);
   border: 1px solid var(--line);
   border-radius: 0;
-  background: var(--bg);
-  color: var(--fg);
   resize: vertical;
 }
 
@@ -40,6 +39,10 @@
   color: var(--accent);
 }
 
+.admin .muted {
+  color: var(--ink-2);
+}
+
 .admin .error {
   color: var(--accent);
 }
@@ -48,10 +51,18 @@
   flex: 1;
 }
 
+.admin kbd {
+  font: inherit;
+  font-size: 12px;
+  padding: 0 4px;
+  border: 1px solid var(--line);
+}
+
 /* Login */
 .admin.login {
   max-width: 320px;
-  padding-top: 30vh;
+  margin: 0 auto;
+  padding: 30vh 16px 0;
 }
 
 .login form {
@@ -61,199 +72,549 @@
 
 .login button {
   justify-self: start;
+  padding: 6px 16px;
+  color: var(--bg);
+  background: var(--fg);
+}
+
+.login button:hover {
+  color: var(--bg) !important;
+  background: var(--accent);
 }
 
 /* Top bar */
 .bar {
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 10;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 12px 0;
+  gap: 20px;
+  height: var(--bar);
+  padding: 0 20px;
   background: var(--bg);
   border-bottom: 1px solid var(--fg);
 }
 
-.primary {
-  padding: 4px 14px;
-  border: 1px solid var(--fg) !important;
+.brand {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .status {
-  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--ink-2);
+}
+
+.status.dirty::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
 }
 
 .status.error {
   color: var(--accent);
 }
 
-.hint {
-  margin: 16px 0;
-  color: #666;
+.dismiss {
+  font-size: 11px;
 }
 
-/* Rows */
-.rows {
+.save {
+  padding: 7px 18px;
+  color: var(--bg);
+  background: var(--fg);
+}
+
+.admin .save:not(:disabled):hover {
+  color: var(--bg);
+  background: var(--accent);
+}
+
+.admin .save:disabled {
+  opacity: 1;
+  color: var(--ink-2);
+  background: var(--soft);
+}
+
+/* Two columns: the text, and the panel of the selected item */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
+}
+
+.doc {
+  padding: 20px 20px 120px 0;
+}
+
+.doc ol {
   list-style: none;
 }
 
-.row {
-  padding: 10px 0 6px;
-  border-bottom: 1px solid var(--line);
+.panel {
+  position: sticky;
+  top: var(--bar);
+  height: calc(100vh - var(--bar));
+  overflow-y: auto;
+  border-left: 1px solid var(--line);
 }
 
-.row-tools,
-.insert {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.row-tools {
-  margin-bottom: 4px;
-  font-size: 13px;
-}
-
-.kind {
-  text-transform: uppercase;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-}
-
-.row-project {
-  background: #f6f6f6;
-  margin: 0 -10px;
-  padding-left: 10px;
-  padding-right: 10px;
-}
-
-.insert {
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.row:not(:hover) .insert {
-  visibility: hidden;
-}
-
-.fields,
-.project-fields {
+/* Lines of text, set like the site */
+.block {
+  position: relative;
   display: grid;
-  gap: 10px;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: start;
+  font-size: var(--text-size);
+  line-height: var(--text-leading);
+  letter-spacing: var(--tracking);
 }
 
-.fields {
-  grid-template-columns: repeat(3, 1fr);
+.block:hover,
+.block:focus-within,
+.block.is-selected {
+  background: var(--soft);
 }
 
-.project-fields .count {
-  color: var(--muted);
-}
-
-/* Photos */
-.photos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.photos figure {
-  width: 140px;
-}
-
-.photos img,
-.photos video {
-  display: block;
-  width: 140px;
-  height: 100px;
-  object-fit: contain;
-  background: #e8e8e8;
-}
-
-.photos figcaption {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-}
-
-.add-photos {
+.handle {
+  align-self: stretch;
   display: grid;
   place-items: center;
-  width: 140px;
-  height: 100px;
-  border: 1px dashed var(--muted);
-  font-size: 13px;
-  cursor: pointer;
+  font-size: 12px;
+  letter-spacing: -0.15em;
+  color: var(--ink-2);
+  cursor: grab;
+  user-select: none;
+  opacity: 0;
 }
 
-.add-photos:hover {
-  color: var(--accent);
-  border-color: var(--accent);
+.block:hover .handle {
+  opacity: 1;
 }
 
-.add-photos input {
-  display: none;
+.content {
+  padding: 2px 0;
 }
 
-@media (max-width: 640px) {
-  .fields {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Collapsible projects */
-.expand-all {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 8px;
-  font-size: 13px;
-}
-
-.toggle {
-  flex: 1;
-  min-width: 0;
+.content textarea {
+  padding: 0;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-size: 15px;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  background: transparent;
+  border: 0;
+  resize: none;
 }
 
-.toggle .arrow {
-  display: inline-block;
-  width: 1.2em;
-}
-
-.toggle .count {
+.content textarea::placeholder {
   color: var(--muted);
 }
 
-.row-project .row-tools {
-  margin-bottom: 8px;
+.project-line,
+.contact-line {
+  display: block;
+  width: 100%;
+  text-align: left;
 }
 
-/* Drag and drop of photos onto a project */
-.row-project.is-drop {
+.project-line .label {
+  text-decoration: underline;
+  text-decoration-color: var(--muted);
+  text-underline-offset: 3px;
+}
+
+.project-line .count {
+  margin-left: 1.25em;
+  color: var(--ink-2);
+}
+
+.project-line .busy {
+  margin-left: 1em;
+  font-size: 12px;
+  letter-spacing: normal;
+  color: var(--accent);
+}
+
+.contact-line u {
+  text-decoration-color: var(--muted);
+  text-underline-offset: 3px;
+}
+
+.block.is-selected .project-line,
+.block.is-selected .contact-line {
+  color: var(--accent);
+}
+
+.tools {
+  display: flex;
+  gap: 2px;
+  padding: 0 8px;
+  font-size: 12px;
+  line-height: 21px;
+  letter-spacing: normal;
+  opacity: 0;
+}
+
+.tools button {
+  padding: 0 5px;
+  color: var(--ink-2);
+}
+
+.block:hover .tools,
+.block:focus-within .tools {
+  opacity: 1;
+}
+
+.admin .danger:not(:disabled):hover {
+  color: var(--accent);
+}
+
+.block.is-dragging {
+  opacity: 0.35;
+}
+
+.block.is-drop-before {
+  box-shadow: inset 0 2px 0 var(--accent);
+}
+
+.block.is-file-over {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
 
-.add-photos span {
-  text-align: center;
+/* Insert a line between two others: a "+" in the left margin */
+.inserter {
+  position: relative;
+  z-index: 2;
+  height: 6px;
 }
 
-/* Reordering photos by dragging */
-.photos figure {
+.inserter-line,
+.inserter .plus {
+  position: absolute;
+  top: 50%;
+  opacity: 0;
+}
+
+.inserter-line {
+  left: 32px;
+  right: 0;
+  height: 1px;
+  background: var(--accent);
+}
+
+.inserter .plus {
+  left: 7px;
+  width: 18px;
+  height: 18px;
+  margin-top: -9px;
+  font-size: 14px;
+  line-height: 16px;
+  text-align: center;
+  color: var(--accent);
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+}
+
+.inserter:hover .inserter-line,
+.inserter:hover .plus,
+.inserter.is-open .inserter-line,
+.inserter.is-open .plus {
+  opacity: 1;
+}
+
+.inserter-menu {
+  position: absolute;
+  top: 50%;
+  left: 32px;
+  display: flex;
+  transform: translateY(-50%);
+  font-size: 12px;
+  background: var(--bg);
+  border: 1px solid var(--accent);
+}
+
+.inserter-menu button {
+  padding: 2px 10px;
+}
+
+.inserter-menu button + button {
+  border-left: 1px solid var(--line);
+}
+
+.inserter.always {
+  display: flex;
+  gap: 8px;
+  height: auto;
+  margin-top: 16px;
+  padding-left: 32px;
+  font-size: 12px;
+}
+
+.inserter.always button {
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+}
+
+/* Panel */
+.panel-body {
+  min-height: 100%;
+  padding: 18px 24px 40px;
+}
+
+.panel-body.is-file-over {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kicker {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  margin-top: 18px;
+}
+
+.field > span {
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.title-input {
+  font-size: 17px !important;
+}
+
+.admin .caption-input {
+  min-height: 64px;
+  overflow: hidden;
+  resize: none;
+}
+
+/* Photos and videos */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 8px;
+}
+
+.grid figure,
+.grid .add {
+  position: relative;
+  aspect-ratio: 1;
+  background: var(--soft);
+}
+
+.grid figure {
   cursor: grab;
 }
 
-.photos figure.is-dragging {
+.grid img,
+.grid video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.grid .index,
+.grid .badge {
+  position: absolute;
+  left: 4px;
+  padding: 0 4px;
+  font-size: 11px;
+  line-height: 16px;
+  background: var(--bg);
+}
+
+.grid .index {
+  top: 4px;
+}
+
+.grid .badge {
+  bottom: 4px;
+}
+
+.grid .remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  background: var(--bg);
+  opacity: 0;
+}
+
+.grid figure:hover .remove {
+  opacity: 1;
+}
+
+.grid figure.is-dragging {
   opacity: 0.3;
 }
 
-.photos figure.is-over {
+.grid figure.is-over {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+.grid .uploading {
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  padding: 8px;
+  font-size: 11px;
+  text-align: center;
+  cursor: default;
+  animation: pulse 1.2s ease-in-out infinite alternate;
+}
+
+.upload-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--ink-2);
+}
+
+.upload-state {
+  color: var(--accent);
+}
+
+@keyframes pulse {
+  to {
+    background: var(--line);
+  }
+}
+
+.grid .add {
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  font-size: 13px;
+  text-align: center;
+  background: none;
+  border: 1px dashed var(--muted);
+  cursor: pointer;
+}
+
+.grid .add small {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--ink-2);
+}
+
+.grid .add:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.grid .add input {
+  display: none;
+}
+
+.panel-foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 32px;
+  padding-top: 12px;
+  font-size: 13px;
+  border-top: 1px solid var(--line);
+}
+
+.panel-foot button {
+  color: var(--ink-2);
+}
+
+.panel-help {
+  color: var(--ink-2);
+}
+
+.panel-help p {
+  color: var(--fg);
+}
+
+.panel-help ul {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+  padding-left: 16px;
+}
+
+/* Narrow screens: one column, the panel opens over the text */
+@media (max-width: 899px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .doc {
+    padding-right: 8px;
+  }
+
+  .panel {
+    display: none;
+    position: fixed;
+    inset: var(--bar) 0 0;
+    height: auto;
+    z-index: 5;
+    background: var(--bg);
+    border-left: 0;
+  }
+
+  .has-selection .panel {
+    display: block;
+  }
+
+  .bar {
+    gap: 12px;
+    padding: 0 12px;
+  }
+
+  .bar .brand,
+  .bar a {
+    display: none;
+  }
+}
+
+/* Touch screens: no hover, so keep the line tools visible and drop drag handles */
+@media (hover: none) {
+  .tools {
+    opacity: 1;
+  }
+
+  .handle {
+    visibility: hidden;
+  }
+
+  .inserter .plus,
+  .inserter-line {
+    opacity: 0.5;
+  }
+
+  .grid .remove {
+    opacity: 1;
+  }
 }
