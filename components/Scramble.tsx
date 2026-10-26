@@ -28,20 +28,12 @@ const GLITCH = GLITCH_OUT + GLITCH_HOLD + GLITCH_BACK + GREY;
 // Idle: after IDLE ms without any activity, the letters disappear one by one within VANISH ms (open
 // images and captions fade out too). On the next activity they come back: each appears as a red
 // glyph within WAKE_IN ms, they hold for WAKE_HOLD ms, then turn into letters within WAKE_BACK ms.
-const IDLE = 60_000;
+const IDLE = 40_000;
 const VANISH = 1200;
 const WAKE_IN = 400;
 const WAKE_HOLD = 200;
 const WAKE_BACK = 600;
 const WAKE = WAKE_IN + WAKE_HOLD + WAKE_BACK + GREY;
-
-// HIGHLIGHT_AFTER ms after each animation with glyphs, the project names light up one after the
-// other from top to bottom: red for HIGHLIGHT_RED ms, then grey for HIGHLIGHT_GREY ms, each one
-// starting HIGHLIGHT_STAGGER ms after the previous one.
-const HIGHLIGHT_AFTER = 5000;
-const HIGHLIGHT_STAGGER = 90;
-const HIGHLIGHT_RED = 200;
-const HIGHLIGHT_GREY = 250;
 
 type Anim =
   | { kind: "landing"; id: number; t: number }
@@ -51,24 +43,8 @@ type Anim =
   | null;
 
 const Clock = createContext<Anim>(null);
-const Highlight = createContext<number | null>(null); // ms since the highlight started
-
-/** Time since the project names started lighting up, or null. */
-export const useHighlight = () => useContext(Highlight);
-
-/** Colour of the project name at position `order` (0 = first) during the highlight. */
-export function highlightClass(t: number | null, order: number) {
-  if (t === null) return "";
-  const local = t - order * HIGHLIGHT_STAGGER;
-  if (local < 0) return "";
-  if (local < HIGHLIGHT_RED) return " hl-red";
-  if (local < HIGHLIGHT_RED + HIGHLIGHT_GREY) return " hl-grey";
-  return "";
-}
-
 export function ScrambleClock({ children }: { children: React.ReactNode }) {
   const [anim, setAnim] = useState<Anim>({ kind: "landing", id: 0, t: 0 });
-  const [highlight, setHighlight] = useState<number | null>(null);
   const current = useRef<Anim>(anim);
   current.current = anim;
 
@@ -79,27 +55,8 @@ export function ScrambleClock({ children }: { children: React.ReactNode }) {
     }
 
     let frame = 0;
-    let highlightFrame = 0;
-    let highlightTimer = 0;
     let glitchTimer = 0;
     let ids = 0;
-
-    // Lights up the project names, HIGHLIGHT_AFTER ms after an animation with glyphs.
-    const scheduleHighlight = () => {
-      window.clearTimeout(highlightTimer);
-      highlightTimer = window.setTimeout(() => {
-        const count = document.querySelectorAll(".project").length;
-        const total = (count - 1) * HIGHLIGHT_STAGGER + HIGHLIGHT_RED + HIGHLIGHT_GREY;
-        const start = performance.now();
-        cancelAnimationFrame(highlightFrame);
-        highlightFrame = requestAnimationFrame(function tick(now) {
-          const t = now - start;
-          if (t >= total) return setHighlight(null);
-          setHighlight(t);
-          highlightFrame = requestAnimationFrame(tick);
-        });
-      }, HIGHLIGHT_AFTER);
-    };
 
     // Runs one animation frame by frame. A vanish stays at its end (letters hidden).
     const play = (kind: Exclude<Anim, null>["kind"], duration: number) => {
@@ -110,8 +67,7 @@ export function ScrambleClock({ children }: { children: React.ReactNode }) {
         const t = now - start;
         if (t >= duration) {
           if (kind === "vanish") return setAnim({ kind, id, t: duration });
-          setAnim(null);
-          return scheduleHighlight();
+          return setAnim(null);
         }
         setAnim({ kind, id, t });
         frame = requestAnimationFrame(tick);
@@ -150,8 +106,6 @@ export function ScrambleClock({ children }: { children: React.ReactNode }) {
 
     return () => {
       cancelAnimationFrame(frame);
-      cancelAnimationFrame(highlightFrame);
-      window.clearTimeout(highlightTimer);
       window.clearTimeout(glitchTimer);
       window.clearInterval(idleCheck);
       for (const e of events) window.removeEventListener(e, onActivity);
@@ -162,9 +116,7 @@ export function ScrambleClock({ children }: { children: React.ReactNode }) {
   const idle = anim?.kind === "vanish";
   return (
     <Clock.Provider value={anim}>
-      <Highlight.Provider value={highlight}>
-        <div className={idle ? "anim-root is-idle" : "anim-root"}>{children}</div>
-      </Highlight.Provider>
+      <div className={idle ? "anim-root is-idle" : "anim-root"}>{children}</div>
     </Clock.Provider>
   );
 }

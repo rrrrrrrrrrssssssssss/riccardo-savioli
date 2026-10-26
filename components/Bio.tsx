@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Block, Image, Project } from "@/lib/content";
 import { splitLabel } from "@/lib/label";
-import { Scramble, ScrambleClock, highlightClass, useHighlight } from "./Scramble";
+import { Scramble, ScrambleClock } from "./Scramble";
 
 // Keep in sync with app/globals.css: --open-duration, and the caption + image fade-out (--fade × 1.8).
 const OPEN_DURATION = 600;
@@ -12,12 +12,20 @@ const CLOSE_FADE = 450;
 // the image then appears as soon as it arrives.
 const REVEAL_TIMEOUT = 800;
 
-// Mobile: scroll so the project being opened sits near the top of the screen, with two lines of
-// text above it, so its carousel doesn't open half off-screen.
-function bringToTop(slug: string) {
-  if (!window.matchMedia("(max-width: 767px)").matches) return;
+// When a project opens, scroll so it can be seen whole.
+// Mobile: the project goes near the top of the screen, two lines of text above it.
+// Desktop: only if needed, just enough to show the tallest of its images and the caption in
+// full, without the title leaving the top of the screen.
+// Near the end of the page there may not be enough page below to scroll that far, so the page
+// is given that room (min-height) for as long as the project stays open.
+function revealProject(slug: string, images: Image[]) {
   const el = document.querySelector<HTMLElement>(`[data-slug="${CSS.escape(slug)}"]`);
   if (!el) return;
+  const mobile = window.matchMedia("(max-width: 767px)").matches;
+  const css = getComputedStyle(document.documentElement);
+  const margin = parseFloat(css.getPropertyValue("--margin")) || 5;
+  const leading = parseFloat(getComputedStyle(el.querySelector(".line")!).lineHeight) || 20;
+
   let top = el.getBoundingClientRect().top + window.scrollY;
   // A project above that collapses at the same moment will pull this one up by its panel height.
   for (const other of document.querySelectorAll<HTMLElement>(".project.is-open")) {
@@ -25,13 +33,37 @@ function bringToTop(slug: string) {
       top -= other.querySelector(".panel")!.getBoundingClientRect().height;
     }
   }
-  const leading = parseFloat(getComputedStyle(el.querySelector(".line")!).lineHeight) || 20;
-  const target = Math.max(0, top - 2 * leading);
+
+  let target: number;
+  if (mobile) {
+    target = Math.max(0, top - 2 * leading);
+  } else {
+    // Same sizing as figure img in app/globals.css: 294px tall, 20–37% of the screen wide.
+    const vw = window.innerWidth;
+    const imageHeight = parseFloat(css.getPropertyValue("--image-height")) || 294;
+    const tallest = Math.max(
+      0,
+      ...images.map((img) => {
+        const ratio = img.height / img.width;
+        const width = Math.min(Math.max(0.2 * vw, imageHeight / ratio), 0.37 * vw);
+        return width * ratio;
+      }),
+    );
+    const caption = el.querySelector<HTMLElement>(".caption")?.offsetHeight ?? 3 * leading;
+    const bottom =
+      top + el.querySelector<HTMLElement>(".line")!.offsetHeight + 4 + tallest + caption;
+    const needed = bottom + margin - window.innerHeight;
+    if (needed <= window.scrollY) return;
+    target = Math.min(needed, top - margin);
+  }
+
+  document.documentElement.style.minHeight = `${target + window.innerHeight}px`;
   window.scrollTo({ top: target, behavior: "smooth" });
-  // Near the end of the page the target may only become reachable once the panel has opened.
-  window.setTimeout(() => {
-    if (Math.abs(window.scrollY - target) > 2) window.scrollTo({ top: target, behavior: "smooth" });
-  }, OPEN_DURATION);
+}
+
+// Gives the page back its own height once no project is open (after the panel has closed).
+function releaseRoom() {
+  document.documentElement.style.minHeight = "";
 }
 
 export default function Bio({ blocks }: { blocks: Block[] }) {
@@ -50,11 +82,15 @@ export default function Bio({ blocks }: { blocks: Block[] }) {
   // Closing fades out first; then, in the same frame, the old panel collapses and the new one
   // (if any) opens, so only the text between the two projects moves.
   const timer = useRef<number | undefined>(undefined);
+  const imagesOf = (slug: string) =>
+    blocks.find(
+      (b): b is Extract<Block, { type: "project" }> => b.type === "project" && b.slug === slug,
+    )?.project.images ?? [];
   const toggle = (slug: string) => {
     window.clearTimeout(timer.current);
     if (!open) {
       setClosing(false);
-      bringToTop(slug);
+      revealProject(slug, imagesOf(slug));
       return setOpen({ slug, index: 0 });
     }
     if (open.slug === slug && closing) return setClosing(false); // reopened while fading out
@@ -62,7 +98,8 @@ export default function Bio({ blocks }: { blocks: Block[] }) {
     setClosing(true);
     timer.current = window.setTimeout(() => {
       setClosing(false);
-      if (next) bringToTop(next.slug);
+      if (next) revealProject(next.slug, imagesOf(next.slug));
+      else window.setTimeout(releaseRoom, OPEN_DURATION);
       setOpen(next);
     }, CLOSE_FADE);
   };
@@ -110,7 +147,6 @@ export default function Bio({ blocks }: { blocks: Block[] }) {
           return (
             <ProjectLine
               key={b.slug}
-              order={blocks.slice(0, i).filter((x) => x.type === "project").length}
               slug={b.slug}
               label={b.label}
               project={b.project}
@@ -130,7 +166,6 @@ export default function Bio({ blocks }: { blocks: Block[] }) {
 
 function ProjectLine({
   slug,
-  order,
   label,
   project,
   isOpen,
@@ -141,7 +176,6 @@ function ProjectLine({
   onSelect,
 }: {
   slug: string;
-  order: number; // position among the projects, for the top-to-bottom highlight
   label: string;
   project: Project;
   isOpen: boolean;
@@ -151,7 +185,6 @@ function ProjectLine({
   onStep: (delta: number) => void;
   onSelect: (index: number) => void;
 }) {
-  const highlight = useHighlight();
   const mobile = useMediaQuery("(max-width: 767px)");
   const lineRef = useRef<HTMLParagraphElement>(null);
   const labelRef = useRef<HTMLSpanElement>(null);
@@ -291,7 +324,7 @@ function ProjectLine({
       >
         {/* Inline (not a <button>) so the counter can follow the last line of a long title. */}
         <span
-          className={`title${highlightClass(highlight, order)}`}
+          className="title"
           role="button"
           tabIndex={total ? 0 : -1}
           aria-disabled={total === 0}
