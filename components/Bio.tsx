@@ -295,8 +295,10 @@ function ProjectLine({
 // that the track slides onto before jumping back, unseen, to the real item. Vertical swipes scroll
 // the page as usual. The text below stays still while dragging; on release the item and the height
 // move together, in one movement that starts fast and settles (SLIDE_EASE).
-// Only the current item and its neighbours are loaded (just the first while closed).
-const NEAR = 1;
+// Photos load two items ahead and behind and stay loaded once seen; videos (heavier, and phones
+// limit how many can play) only right next to the current item. While closed, just the first.
+const NEAR_PHOTOS = 2;
+const NEAR_VIDEOS = 1;
 const SWIPE_DISTANCE = 0.2;
 const SWIPE_SPEED = 0.3; // px per ms
 const SLIDE_DURATION = 350;
@@ -362,13 +364,24 @@ function Strip({
   // Slides onto the copy at one end, then jumps to the real item it stands for.
   const slideAround = (copy: number, real: number) => {
     place(copy, true);
-    wrapTimer.current = window.setTimeout(() => place(real, false), SLIDE_DURATION);
+    wrapTimer.current = window.setTimeout(() => {
+      wrapTimer.current = undefined;
+      place(real, false);
+    }, SLIDE_DURATION);
+  };
+  // Interrupted wrap-around (a new swipe, Back or Next within SLIDE_DURATION): finish the jump
+  // to the real item now, otherwise the next move would start from the copy at the far end.
+  const finishWrap = () => {
+    if (wrapTimer.current === undefined) return;
+    window.clearTimeout(wrapTimer.current);
+    wrapTimer.current = undefined;
+    place(resting.current, false);
   };
 
   // New index (swipe, Back, Next, keys): slide there, the short way round when wrapping.
   // Bigger jumps (reopening on another item) are instant.
   useLayoutEffect(() => {
-    window.clearTimeout(wrapTimer.current);
+    finishWrap();
     const from = resting.current;
     resting.current = index;
     if (loops && from === count - 1 && index === 0) slideAround(count, 0);
@@ -412,7 +425,17 @@ function Strip({
         { pos: count, img: images[0] },
       ]
     : images.map((img, i) => ({ pos: i, img }));
-  const near = isOpen ? NEAR : 0;
+  // Which slots get their media: near the current item, plus photos already shown once.
+  const seen = useRef(new Set<number>());
+  const loads = (pos: number, img: Image) => {
+    const distance = Math.abs(pos - index);
+    if (!isOpen) return distance === 0;
+    if (distance <= (img.video ? NEAR_VIDEOS : NEAR_PHOTOS)) {
+      if (!img.video) seen.current.add(pos);
+      return true;
+    }
+    return !img.video && seen.current.has(pos);
+  };
 
   return (
     <div
@@ -420,12 +443,7 @@ function Strip({
       className="strip"
       onPointerDown={(e) => {
         if (!e.isPrimary) return;
-        // A new touch during a wrap-around: settle on the real item first.
-        if (wrapTimer.current !== undefined) {
-          window.clearTimeout(wrapTimer.current);
-          wrapTimer.current = undefined;
-          place(index, false);
-        }
+        finishWrap();
         gesture.current = {
           x: e.clientX,
           y: e.clientY,
@@ -466,7 +484,7 @@ function Strip({
       <div ref={track} className="track">
         {slots.map(({ pos, img }) => (
           <div key={pos} className="slide" style={{ aspectRatio: `${img.width} / ${img.height}` }}>
-            {Math.abs(pos - index) <= near && (
+            {loads(pos, img) && (
               <MediaItem
                 image={img}
                 alt={`${label} — ${((pos + count) % count) + 1}/${count}`}
@@ -509,7 +527,8 @@ function MediaItem({
   return image.video ? (
     <video
       ref={video}
-      src={image.src}
+      // #t= makes iOS show the first frame even when it won't autoplay (e.g. Low Power Mode).
+      src={`${image.src}#t=0.001`}
       width={image.width}
       height={image.height}
       style={style}
@@ -531,6 +550,8 @@ function MediaItem({
       height={image.height}
       style={style}
       alt={alt}
+      decoding="async"
+      fetchPriority={active ? "high" : "low"}
       onLoad={done}
       onError={done}
       onClick={onClick}

@@ -241,6 +241,7 @@ figure video {
 
 .slide {
   flex: 0 0 100%;
+  -webkit-touch-callout: none; /* no "Save image" menu interrupting a swipe */
 }
 
 .slide img,
