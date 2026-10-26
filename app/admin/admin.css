@@ -124,6 +124,8 @@
 
 .status.error {
   color: var(--accent);
+  white-space: normal; /* errors can be long: let them wrap instead of being cut */
+  line-height: 1.25;
 }
 
 .dismiss {
@@ -232,6 +234,10 @@
   text-decoration: underline;
   text-decoration-color: var(--muted);
   text-underline-offset: 3px;
+}
+
+.project-line .label.empty {
+  color: var(--ink-2);
 }
 
 .project-line .count {
@@ -403,8 +409,51 @@
   color: var(--ink-2);
 }
 
-.title-input {
-  font-size: 17px !important;
+/* Project line as a sentence: [before] [name] [after], growing with their text */
+.sentence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 6px;
+  row-gap: 2px;
+  padding: 8px 10px;
+  font-size: 17px;
+  border: 1px solid var(--line);
+}
+
+.sentence:focus-within {
+  border-color: var(--fg);
+}
+
+.admin .sentence .part {
+  display: inline-block;
+  width: auto;
+  min-width: 2ch;
+  max-width: 100%;
+  field-sizing: content;
+  padding: 2px 0;
+  font-size: inherit;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px dashed var(--line);
+}
+
+.admin .sentence .part:focus {
+  border-bottom-color: var(--fg);
+}
+
+.admin .sentence .part-name {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  border-bottom-color: transparent;
+}
+
+.admin .sentence .part::placeholder {
+  color: var(--muted);
+}
+
+.admin .sentence .part:placeholder-shown:not(:focus) {
+  border-bottom-color: var(--line);
 }
 
 .admin .caption-input {

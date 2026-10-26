@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Image, Project, RawBlock, Site } from "@/lib/content";
+import { joinLabel, splitLabel } from "@/lib/label";
 import { ACCEPT, convert, isMedia } from "@/lib/media";
 
 // Layout: on the left the text, laid out line by line as on the site and editable in place;
@@ -222,7 +223,7 @@ export default function Editor({
       const res = await fetch("/api/admin/content", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ site: { blocks, projects: kept }, added, removed }),
+        body: JSON.stringify({ site: { blocks, projects: kept }, added, removed, baseSha: sha }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
@@ -233,7 +234,8 @@ export default function Editor({
       setDirty(false);
       setNotice({ text: "Salvato. Il sito online si aggiorna in circa un minuto." });
     } catch (e) {
-      setNotice({ text: `Salvataggio non riuscito: ${String(e)}`, error: true });
+      const message = e instanceof Error ? e.message : String(e);
+      setNotice({ text: `Salvataggio non riuscito. ${message}`, error: true });
     } finally {
       setSaving(false);
     }
@@ -524,7 +526,7 @@ function BlockRow({
 
         {b.type === "project" && (
           <button className="project-line" onClick={onSelect} aria-pressed={selected}>
-            <span className="label">{b.label || "Progetto senza titolo"}</span>
+            <ProjectLabel label={b.label} />
             <span className="count">({images})</span>
             {uploading > 0 && <span className="busy">caricamento…</span>}
           </button>
@@ -705,21 +707,7 @@ function ProjectPanel({
         </button>
       </div>
 
-      <label className="field">
-        <span>Titolo nel testo</span>
-        <input
-          className="title-input"
-          value={label}
-          autoFocus={!label}
-          onChange={(e) => onLabel(e.target.value)}
-          placeholder="Es. Alessi,"
-        />
-        <small className="muted">
-          Sul sito è cliccabile solo il nome. Se prima o dopo ci sono altre parole, metti il nome
-          tra parentesi quadre: He developed the [Luca A. Caizzi Archive System], — le quadre non si
-          vedono sul sito. Senza quadre resta fuori solo la virgola finale.
-        </small>
-      </label>
+      <TitleFields label={label} onLabel={onLabel} />
 
       <label className="field">
         <span>Didascalia</span>
@@ -819,6 +807,61 @@ function ProjectPanel({
           Elimina progetto
         </button>
       </div>
+    </div>
+  );
+}
+
+// A project line in the text column: the clickable name underlined, the words around it plain.
+function ProjectLabel({ label }: { label: string }) {
+  const { before, name, after } = splitLabel(label);
+  if (!name.trim()) return <span className="label empty">Progetto senza titolo</span>;
+  return (
+    <>
+      {before && <span className="plain">{before}</span>}
+      <span className="label">{name}</span>
+      {after && <span className="plain">{after}</span>}
+    </>
+  );
+}
+
+// The project line edited as the sentence it is part of: [text before] [name] [text after].
+// Only the name is clickable on the site; spaces between the parts are added automatically.
+function TitleFields({ label, onLabel }: { label: string; onLabel: (label: string) => void }) {
+  const [parts, setParts] = useState(() => {
+    const p = splitLabel(label);
+    return { before: p.before.trim(), name: p.name, after: p.after.trim() };
+  });
+  const update = (patch: Partial<typeof parts>) => {
+    const next = { ...parts, ...patch };
+    setParts(next);
+    onLabel(joinLabel(next));
+  };
+  const part = (key: keyof typeof parts, placeholder: string, extra = {}) => (
+    <input
+      className={`part part-${key}`}
+      value={parts[key]}
+      placeholder={placeholder}
+      size={Math.max(parts[key].length, placeholder.length, 1)}
+      onChange={(e) => update({ [key]: e.target.value })}
+      {...extra}
+    />
+  );
+
+  return (
+    <div className="field">
+      <span>Riga nel testo</span>
+      <div className="sentence">
+        {part("before", "testo prima", { "aria-label": "Testo prima del nome (facoltativo)" })}
+        {part("name", "Nome del progetto", {
+          "aria-label": "Nome del progetto (cliccabile)",
+          autoFocus: !parts.name,
+        })}
+        {part("after", "dopo", { "aria-label": "Testo dopo il nome (facoltativo)" })}
+      </div>
+      <small className="muted">
+        Sul sito è cliccabile solo il <u>nome</u>. Il testo prima e dopo (articoli, “by…”,
+        punteggiatura) è facoltativo e resta testo normale.
+      </small>
     </div>
   );
 }

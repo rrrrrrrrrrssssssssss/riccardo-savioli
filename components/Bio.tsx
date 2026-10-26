@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Block, Image, Project } from "@/lib/content";
+import { splitLabel } from "@/lib/label";
 import { Scramble, ScrambleClock } from "./Scramble";
 
 // Keep in sync with app/globals.css: --open-duration, and the caption + image fade-out (--fade × 1.8).
@@ -346,16 +347,6 @@ function ProjectLine({
       </div>
     </div>
   );
-}
-
-// The clickable part of a project line is its name. Words around it belong to the sentence:
-// in the admin the name can be put in square brackets ("He developed the [Archive System],");
-// without brackets, only a trailing comma ("Alessi,") is left out.
-function splitLabel(label: string) {
-  const bracketed = label.match(/^(.*?)\[(.+)\](.*)$/s);
-  if (bracketed) return { before: bracketed[1], name: bracketed[2], after: bracketed[3] };
-  const [, name, comma = ""] = label.match(/^(.*?)(,\s*)?$/s) ?? [label, label];
-  return { before: "", name, after: comma };
 }
 
 // Sentence text inside a project line: plain, not clickable, no hover.

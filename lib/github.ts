@@ -41,13 +41,30 @@ export async function uploadBlob(base64: string) {
 }
 
 // One commit: new site.json, newly uploaded photos (by blob sha) and removed photos.
+export class StaleContentError extends Error {}
+
+// Version of site.json at a commit (its blob id), to tell whether it changed in between.
+async function contentVersion(commit: string) {
+  const file = await gh<{ sha: string }>(`/contents/${CONTENT_PATH}?ref=${commit}`);
+  return file.sha;
+}
+
 export async function commitSite(
   site: Site,
   added: { path: string; sha: string }[],
   removed: string[],
   message: string,
+  baseSha: string,
 ) {
   const ref = await gh<{ object: { sha: string } }>(`/git/ref/heads/${BRANCH}`);
+  // The admin edited the content as of baseSha. If site.json has changed since (another tab,
+  // or a direct edit in the repo), saving would silently overwrite that: refuse instead.
+  if (
+    ref.object.sha !== baseSha &&
+    (await contentVersion(ref.object.sha)) !== (await contentVersion(baseSha))
+  ) {
+    throw new StaleContentError();
+  }
   const parent = await gh<{ tree: { sha: string } }>(`/git/commits/${ref.object.sha}`);
 
   const tree = await gh<{ sha: string }>("/git/trees", {

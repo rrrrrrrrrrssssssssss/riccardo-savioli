@@ -13,7 +13,8 @@
   --caption-scale: 0.9;
   --tracking: 0.05em; /* InDesign tracking 50 */
   --image-height: 294px;
-  --image-max-width: 25vw; /* desktop: at most a quarter of the screen width */
+  --image-min-width: 20vw; /* desktop: at least a fifth of the screen width */
+  --image-max-width: 37vw; /* desktop: at most 37% of the screen width */
   --open-duration: 600ms; /* text moving to make room */
   --fade: 250ms; /* image, then caption, fading in (reverse order when closing) */
   --ease: cubic-bezier(0.65, 0, 0.35, 1);
@@ -251,12 +252,17 @@ figure {
 /* Each photo or video has its own height, so the caption and the text below always keep the
    designed distance from it. The height comes from the known proportions (--ratio, set in
    components/Bio.tsx), so the space is right before the file has loaded.
-   Desktop: 294px tall, or lower when that would exceed a quarter of the screen width. */
+   Desktop: 294px tall, but never narrower than --image-min-width nor wider than
+   --image-max-width (so very wide images get lower, very narrow ones taller). */
 figure img,
 figure video {
   display: block;
-  width: auto;
-  height: min(var(--image-height), calc(var(--image-max-width) * var(--ratio)));
+  width: clamp(
+    var(--image-min-width),
+    calc(var(--image-height) / var(--ratio)),
+    var(--image-max-width)
+  );
+  height: auto;
   cursor: pointer;
 }
 
