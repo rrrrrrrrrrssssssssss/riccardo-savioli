@@ -322,13 +322,33 @@
       "caption": "Art direction by Studio Temp. Creative direction by Francesco Meda e David Lopez Quincoces. Alias team: Alice Ricci, Silvia Chiarotto, Silvia Tiraboschi. Apr 2023 — 2025.",
       "images": [
         {
+          "src": "/projects/alias/mvp3drgfbmx6.webp",
+          "width": 720,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp3dtft0gae.webp",
+          "width": 720,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp353tzphe8.webp",
+          "width": 720,
+          "height": 900
+        },
+        {
           "src": "/projects/alias/mvp2txr331dh.webp",
           "width": 900,
           "height": 900
         },
         {
-          "src": "/projects/alias/mvp2x334jifh.webp",
+          "src": "/projects/alias/mvp3l1misyn9.webp",
           "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp3hj5hkz08.webp",
+          "width": 720,
           "height": 900
         },
         {
@@ -347,62 +367,42 @@
           "height": 900
         },
         {
+          "src": "/projects/alias/mvp3hdm83asv.webp",
+          "width": 720,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp3hfkhvkiv.webp",
+          "width": 720,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp3hh2ekxdr.webp",
+          "width": 720,
+          "height": 900
+        },
+        {
           "src": "/projects/alias/mvp2xshkwy63.webp",
           "width": 900,
           "height": 900
         },
         {
-          "src": "/projects/alias/mvp351cvnxd3.webp",
-          "width": 720,
-          "height": 900
-        },
-        {
-          "src": "/projects/alias/mvp352kxqrfi.webp",
-          "width": 600,
-          "height": 900
-        },
-        {
-          "src": "/projects/alias/mvp353djc420.webp",
-          "width": 720,
-          "height": 900
-        },
-        {
-          "src": "/projects/alias/mvp353tzphe8.webp",
-          "width": 720,
-          "height": 900
-        },
-        {
-          "src": "/projects/alias/mvp35p2ma6cx.webp",
-          "width": 720,
-          "height": 900
-        },
-        {
-          "src": "/projects/alias/mvp3603wkw1r.webp",
-          "width": 720,
-          "height": 900
-        },
-        {
-          "src": "/projects/alias/mvp37f4e2url.webp",
-          "width": 641,
-          "height": 900
-        },
-        {
-          "src": "/projects/alias/mvp37wb9zkk2.webp",
-          "width": 720,
-          "height": 900
-        },
-        {
-          "src": "/projects/alias/mvp385span3l.webp",
-          "width": 901,
-          "height": 900
-        },
-        {
-          "src": "/projects/alias/mvp38m1y6ehr.webp",
-          "width": 720,
+          "src": "/projects/alias/mvp2x334jifh.webp",
+          "width": 900,
           "height": 900
         },
         {
           "src": "/projects/alias/mvp38y71td59.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp3kt8exwcy.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp39dpuxn9j.webp",
           "width": 900,
           "height": 900
         },
@@ -412,8 +412,58 @@
           "height": 900
         },
         {
-          "src": "/projects/alias/mvp39dpuxn9j.webp",
+          "src": "/projects/alias/mvp37f4e2url.webp",
+          "width": 641,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp3kzebogre.webp",
           "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp3kxp6jo4c.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp3kvprm13g.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp3kmuj0rxe.webp",
+          "width": 720,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp3krmq5xi0.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp35p2ma6cx.webp",
+          "width": 720,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp38m1y6ehr.webp",
+          "width": 720,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp37wb9zkk2.webp",
+          "width": 720,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp3603wkw1r.webp",
+          "width": 720,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp385span3l.webp",
+          "width": 901,
           "height": 900
         }
       ]
