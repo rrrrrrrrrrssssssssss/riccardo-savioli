@@ -149,6 +149,47 @@ function ProjectLine({
 }) {
   const mobile = useMediaQuery("(max-width: 767px)");
   const lineRef = useRef<HTMLParagraphElement>(null);
+  const labelRef = useRef<HTMLSpanElement>(null);
+  const countRef = useRef<HTMLSpanElement>(null);
+  const navsRef = useRef<HTMLSpanElement>(null);
+  const countBreak = useRef<HTMLSpanElement>(null);
+  const navsBreak = useRef<HTMLSpanElement>(null);
+
+  // When the counter doesn't fit on the title's last line, it starts a new line without the space
+  // before it; Back and Next likewise, together. Measured after every render and on resize.
+  useLayoutEffect(() => {
+    const fit = () => {
+      const label = labelRef.current;
+      const count = countRef.current;
+      if (!label || !count) return;
+      for (const [brk, el] of [
+        [countBreak, count],
+        [navsBreak, navsRef.current],
+      ] as const) {
+        brk.current?.classList.remove("on");
+        el?.classList.remove("wrapped");
+      }
+      const lastLineTop = (el: Element) => {
+        const rects = el.getClientRects();
+        return rects[rects.length - 1]?.top ?? 0;
+      };
+      const wrap = (
+        brk: React.RefObject<HTMLSpanElement | null>,
+        el: HTMLElement,
+        after: Element,
+      ) => {
+        if (el.getBoundingClientRect().top > lastLineTop(after) + 1) {
+          brk.current?.classList.add("on");
+          el.classList.add("wrapped");
+        }
+      };
+      wrap(countBreak, count, label);
+      if (navsRef.current) wrap(navsBreak, navsRef.current, count);
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  });
   // Images load once the title is hovered or the project opened, not with the page.
   const [mounted, setMounted] = useState(false);
   // While closing, keep showing the last image so it can fade out.
@@ -216,15 +257,27 @@ function ProjectLine({
       }
     >
       <p className="line" ref={lineRef}>
-        <button
+        {/* Inline (not a <button>) so the counter can follow the last line of a long title. */}
+        <span
           className="title"
-          onClick={onToggle}
-          onMouseEnter={() => total && setMounted(true)}
+          role="button"
+          tabIndex={total ? 0 : -1}
+          aria-disabled={total === 0}
           aria-expanded={isOpen}
-          disabled={total === 0}
+          onClick={() => total && onToggle()}
+          onKeyDown={(e) => {
+            if (total && (e.key === "Enter" || e.key === " ")) {
+              e.preventDefault();
+              onToggle();
+            }
+          }}
+          onMouseEnter={() => total && setMounted(true)}
         >
-          <Scramble text={label} />
-          <span className="count">
+          <span ref={labelRef}>
+            <Scramble text={label} />
+          </span>
+          <span ref={countBreak} className="break" />
+          <span ref={countRef} className="count">
             {isOpen ? (
               // As wide as the widest counter of this project (invisible copies set the width),
               // so Back and Next never move while the number changes.
@@ -242,15 +295,18 @@ function ProjectLine({
               <Scramble text={`(${total})`} />
             )}
           </span>
-        </button>
+        </span>
         {isOpen && total > 1 && (
           <>
-            <button className="nav" onClick={() => onStep(-1)}>
-              Back
-            </button>
-            <button className="nav" onClick={() => onStep(1)}>
-              Next
-            </button>
+            <span ref={navsBreak} className="break" />
+            <span ref={navsRef} className="navs">
+              <button className="nav" onClick={() => onStep(-1)}>
+                Back
+              </button>
+              <button className="nav" onClick={() => onStep(1)}>
+                Next
+              </button>
+            </span>
           </>
         )}
       </p>

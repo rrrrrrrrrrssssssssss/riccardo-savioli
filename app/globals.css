@@ -85,7 +85,7 @@ button {
 }
 
 /* Project lines (a project without photos stays plain text) */
-.title:disabled {
+.title[aria-disabled="true"] {
   color: inherit;
   cursor: default;
 }
@@ -101,7 +101,7 @@ button {
     color: var(--accent);
   }
 
-  .title:not(:disabled):hover {
+  .title:not([aria-disabled="true"]):hover {
     color: var(--muted);
   }
 
@@ -117,8 +117,37 @@ button {
   }
 }
 
+.title {
+  cursor: pointer;
+}
+
+.count,
+.navs {
+  display: inline-block;
+  white-space: nowrap;
+}
+
 .count {
   margin-left: 1.25em;
+}
+
+/* Counter or Back/Next that don't fit on the line: on a new line, without the space before. */
+.break {
+  display: none;
+}
+
+.break.on {
+  display: inline;
+}
+
+.break.on::before {
+  content: "\A";
+  white-space: pre;
+}
+
+.count.wrapped,
+.navs.wrapped .nav:first-child {
+  margin-left: 0;
 }
 
 .count-box {
