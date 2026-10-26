@@ -714,6 +714,11 @@ function ProjectPanel({
           onChange={(e) => onLabel(e.target.value)}
           placeholder="Es. Alessi,"
         />
+        <small className="muted">
+          Sul sito è cliccabile solo il nome. Se prima o dopo ci sono altre parole, metti il nome
+          tra parentesi quadre: He developed the [Luca A. Caizzi Archive System], — le quadre non si
+          vedono sul sito. Senza quadre resta fuori solo la virgola finale.
+        </small>
       </label>
 
       <label className="field">

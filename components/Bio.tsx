@@ -201,8 +201,8 @@ function ProjectLine({
   }, [isOpen, index]);
 
   const total = project.images.length;
-  // A trailing comma ("Alessi,") belongs to the sentence, not to the project name.
-  const [, name, comma] = label.match(/^(.*?)(,\s*)?$/s) ?? [label, label, ""];
+  const { before, name, after } = splitLabel(label);
+  const plainLabel = before + name + after;
 
   // Mobile has no hover: start loading the first image once the title is on screen.
   useEffect(() => {
@@ -276,13 +276,9 @@ function ProjectLine({
           onMouseEnter={() => total && setMounted(true)}
         >
           <span ref={labelRef}>
+            {before && <Plain text={before} />}
             <Scramble text={name} />
-            {comma && (
-              // Punctuation of the sentence, not part of the link: plain text, no click.
-              <span className="punct" onClick={(e) => e.stopPropagation()}>
-                <Scramble text={comma} />
-              </span>
-            )}
+            {after && <Plain text={after} />}
           </span>
           <span ref={countBreak} className="break" />
           <span ref={countRef} className="count">
@@ -328,7 +324,7 @@ function ProjectLine({
                     isOpen={isOpen}
                     images={project.images}
                     index={isOpen ? index : shown}
-                    label={label}
+                    label={plainLabel}
                     onSelect={onSelect}
                     onLoaded={setLoadedSrc}
                   />
@@ -336,7 +332,7 @@ function ProjectLine({
                   <MediaItem
                     key={image.src}
                     image={image}
-                    alt={`${label} — ${(isOpen ? index : shown) + 1}/${total}`}
+                    alt={`${plainLabel} — ${(isOpen ? index : shown) + 1}/${total}`}
                     active
                     onLoaded={setLoadedSrc}
                     onClick={() => onStep(1)}
@@ -349,6 +345,25 @@ function ProjectLine({
         </div>
       </div>
     </div>
+  );
+}
+
+// The clickable part of a project line is its name. Words around it belong to the sentence:
+// in the admin the name can be put in square brackets ("He developed the [Archive System],");
+// without brackets, only a trailing comma ("Alessi,") is left out.
+function splitLabel(label: string) {
+  const bracketed = label.match(/^(.*?)\[(.+)\](.*)$/s);
+  if (bracketed) return { before: bracketed[1], name: bracketed[2], after: bracketed[3] };
+  const [, name, comma = ""] = label.match(/^(.*?)(,\s*)?$/s) ?? [label, label];
+  return { before: "", name, after: comma };
+}
+
+// Sentence text inside a project line: plain, not clickable, no hover.
+function Plain({ text }: { text: string }) {
+  return (
+    <span className="punct" onClick={(e) => e.stopPropagation()}>
+      <Scramble text={text} />
+    </span>
   );
 }
 
