@@ -13,6 +13,7 @@
   --caption-scale: 0.9;
   --tracking: 0.05em; /* InDesign tracking 50 */
   --image-height: 294px;
+  --image-max-width: 25vw; /* desktop: at most a quarter of the screen width */
   --open-duration: 600ms;
   --ease: cubic-bezier(0.65, 0, 0.35, 1);
 }
@@ -115,15 +116,22 @@ figure {
   padding-top: 4px;
 }
 
+/* Media keep their proportions: 294px tall, or narrower when that would exceed the max width. */
 figure img,
 figure video {
   display: block;
-  height: var(--image-height);
   width: auto;
+  height: auto;
+  max-height: var(--image-height);
   max-width: 100%;
-  object-fit: contain;
-  object-position: left;
   cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  figure img,
+  figure video {
+    max-width: var(--image-max-width);
+  }
 }
 
 .caption {
