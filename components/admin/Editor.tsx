@@ -9,6 +9,8 @@ type EditorImage = Image & { pending?: { sha: string; preview: string } };
 type EditorProject = { caption: string; images: EditorImage[] };
 type Row = { id: number; block: RawBlock };
 
+const PHOTO_DRAG = "application/x-admin-photo"; // drag type for reordering thumbnails
+
 let nextId = 0;
 const toRow = (block: RawBlock): Row => ({ id: nextId++, block });
 const randomName = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -409,14 +411,22 @@ function ProjectEditor({
   onChange: (fn: (p: EditorProject) => EditorProject) => void;
   onAddPhotos: (files: FileList) => void;
 }) {
-  const movePhoto = (i: number, delta: number) =>
+  // Moves the photo at `from` to position `to`.
+  const movePhoto = (from: number, to: number) =>
     onChange((p) => {
-      const j = i + delta;
-      if (j < 0 || j >= p.images.length) return p;
+      if (from === to || to < 0 || to >= p.images.length) return p;
       const images = [...p.images];
-      [images[i], images[j]] = [images[j], images[i]];
+      images.splice(to, 0, ...images.splice(from, 1));
       return { ...p, images };
     });
+
+  // Reordering by dragging thumbnails (separate from dropping new files onto the project).
+  const [dragFrom, setDragFrom] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
+  const endDrag = () => {
+    setDragFrom(null);
+    setDragOver(null);
+  };
 
   return (
     <div className="project-fields">
@@ -439,20 +449,49 @@ function ProjectEditor({
       </label>
       <div className="photos">
         {project.images.map((img, i) => (
-          <figure key={i}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+          <figure
+            key={i}
+            draggable
+            className={
+              i === dragFrom ? "is-dragging" : i === dragOver && dragFrom !== null ? "is-over" : ""
+            }
+            onDragStart={(e) => {
+              e.dataTransfer.setData(PHOTO_DRAG, String(i));
+              e.dataTransfer.effectAllowed = "move";
+              setDragFrom(i);
+            }}
+            onDragOver={(e) => {
+              if (dragFrom === null) return;
+              e.preventDefault();
+              e.stopPropagation();
+              setDragOver(i);
+            }}
+            onDrop={(e) => {
+              if (dragFrom === null) return;
+              e.preventDefault();
+              e.stopPropagation();
+              movePhoto(dragFrom, i);
+              endDrag();
+            }}
+            onDragEnd={endDrag}
+          >
             {img.video ? (
-              <video src={photoUrl(img)} muted loop autoPlay playsInline />
+              <video src={photoUrl(img)} muted loop autoPlay playsInline draggable={false} />
             ) : (
-              <img src={photoUrl(img)} alt="" loading="lazy" />
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={photoUrl(img)} alt="" loading="lazy" draggable={false} />
             )}
             <figcaption>
-              <button onClick={() => movePhoto(i, -1)} disabled={i === 0} title="Sposta a sinistra">
+              <button
+                onClick={() => movePhoto(i, i - 1)}
+                disabled={i === 0}
+                title="Sposta a sinistra"
+              >
                 ←
               </button>
               <span>{i + 1}</span>
               <button
-                onClick={() => movePhoto(i, 1)}
+                onClick={() => movePhoto(i, i + 1)}
                 disabled={i === project.images.length - 1}
                 title="Sposta a destra"
               >

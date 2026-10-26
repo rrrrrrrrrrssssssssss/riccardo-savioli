@@ -243,3 +243,17 @@
 .add-photos span {
   text-align: center;
 }
+
+/* Reordering photos by dragging */
+.photos figure {
+  cursor: grab;
+}
+
+.photos figure.is-dragging {
+  opacity: 0.3;
+}
+
+.photos figure.is-over {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
