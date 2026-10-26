@@ -201,6 +201,8 @@ function ProjectLine({
   }, [isOpen, index]);
 
   const total = project.images.length;
+  // A trailing comma ("Alessi,") belongs to the sentence, not to the project name.
+  const [, name, comma] = label.match(/^(.*?)(,\s*)?$/s) ?? [label, label, ""];
 
   // Mobile has no hover: start loading the first image once the title is on screen.
   useEffect(() => {
@@ -274,7 +276,13 @@ function ProjectLine({
           onMouseEnter={() => total && setMounted(true)}
         >
           <span ref={labelRef}>
-            <Scramble text={label} />
+            <Scramble text={name} />
+            {comma && (
+              // Punctuation of the sentence, not part of the link: plain text, no click.
+              <span className="punct" onClick={(e) => e.stopPropagation()}>
+                <Scramble text={comma} />
+              </span>
+            )}
           </span>
           <span ref={countBreak} className="break" />
           <span ref={countRef} className="count">

@@ -101,11 +101,11 @@ button {
     color: var(--accent);
   }
 
-  .title:not([aria-disabled="true"]):hover {
+  .title:not([aria-disabled="true"]):hover:not(:has(.punct:hover)) {
     color: var(--muted);
   }
 
-  .project.is-open .title:hover {
+  .project.is-open .title:hover:not(:has(.punct:hover)) {
     color: var(--accent);
   }
 }
@@ -119,6 +119,12 @@ button {
 
 .title {
   cursor: pointer;
+}
+
+/* The comma after a project name is plain text: always black, not clickable. */
+.title .punct {
+  color: var(--fg);
+  cursor: default;
 }
 
 .count,
