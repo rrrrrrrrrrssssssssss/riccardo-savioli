@@ -67,7 +67,7 @@
     {
       "type": "project",
       "slug": "c41-magazine",
-      "label": "Redesign of [C41 Magazine]."
+      "label": "Redesign of C41 Magazine."
     },
     {
       "type": "text",
@@ -131,7 +131,7 @@
     {
       "type": "project",
       "slug": "luca-a-caizzi-archive-system",
-      "label": "He developed the [Luca A. Caizzi Archive System],"
+      "label": "He developed the Luca A. Caizzi Archive System,"
     },
     {
       "type": "text",
@@ -167,7 +167,7 @@
     {
       "type": "project",
       "slug": "foa",
-      "label": "Alongside his commissioned work, he is part of [F.O.A.]"
+      "label": "Alongside his commissioned work, he is part of F.O.A."
     },
     {
       "type": "contact",
@@ -1223,8 +1223,14 @@
       ]
     },
     "radar-ep-antimonio": {
-      "caption": "",
-      "images": []
+      "caption": "Art direction and graphic design in collaboration with Giulio Testi. Visual essay by Cecilia Rabeschi. \nNumbered edition of 150. 134 × 185 mm. Published in Jun 2022.",
+      "images": [
+        {
+          "src": "/projects/radar-ep-antimonio/mvp9elea1dea.webp",
+          "width": 900,
+          "height": 900
+        }
+      ]
     },
     "giacomo-moor-studio": {
       "caption": "",
