@@ -7,6 +7,9 @@ import { Scramble, ScrambleClock } from "./Scramble";
 // Keep in sync with app/globals.css: --open-duration, and the caption + image fade-out (--fade × 1.8).
 const OPEN_DURATION = 600;
 const CLOSE_FADE = 450;
+// If the first image is slow (bad connection), show the project anyway after this long;
+// the image then appears as soon as it arrives.
+const REVEAL_TIMEOUT = 1500;
 
 export default function Bio({ blocks }: { blocks: Block[] }) {
   const [open, setOpen] = useState<{ slug: string; index: number } | null>(null);
@@ -145,6 +148,11 @@ function ProjectLine({
       setRevealDelay(Math.max(0, OPEN_DURATION - (performance.now() - openedAt.current)));
     }
   }, [isOpen, revealDelay, image, loadedSrc]);
+  useEffect(() => {
+    if (!isOpen || revealDelay !== null) return;
+    const timer = window.setTimeout(() => setRevealDelay(0), OPEN_DURATION + REVEAL_TIMEOUT);
+    return () => window.clearTimeout(timer);
+  }, [isOpen, revealDelay]);
 
   // Preload the neighbouring photos so moving through the carousel doesn't wait for them.
   useEffect(() => {
@@ -240,8 +248,12 @@ function ProjectLine({
   );
 }
 
-// Mobile: all the media of a project side by side, swiped one at a time. The counter follows the
-// swipe; Back, Next and the arrow keys scroll it. Its height follows the current item.
+// Mobile: all the media of a project side by side, swiped one at a time, with the page margin
+// between them. Only the current item and its neighbours are loaded. When the swipe settles, the
+// counter and the height follow the current item; Back, Next and the arrow keys scroll it.
+const NEAR = 1;
+const SETTLE = 120;
+
 function Strip({
   images,
   index,
@@ -264,44 +276,51 @@ function Strip({
     return () => observer.disconnect();
   }, []);
 
-  const current = () => {
+  // Distance between two snap points: one item plus the gap.
+  const pitch = () => {
     const el = ref.current!;
-    return Math.round(el.scrollLeft / el.clientWidth);
+    return el.clientWidth + (parseFloat(getComputedStyle(el).columnGap) || 0);
   };
+  const current = () => Math.round(ref.current!.scrollLeft / pitch());
 
   // Index changed from outside (Back, Next, keys): scroll there, instantly when wrapping around.
   const last = useRef(index);
   useEffect(() => {
-    const el = ref.current!;
     if (current() !== index) {
       const far = Math.abs(index - last.current) > 1;
-      el.scrollTo({ left: index * el.clientWidth, behavior: far ? "auto" : "smooth" });
+      ref.current!.scrollTo({ left: index * pitch(), behavior: far ? "auto" : "smooth" });
     }
     last.current = index;
   }, [index]);
+
+  // Swipe: report the new item only once scrolling has settled.
+  const indexRef = useRef(index);
+  indexRef.current = index;
+  const settle = useRef<number | undefined>(undefined);
+  const onScroll = () => {
+    window.clearTimeout(settle.current);
+    settle.current = window.setTimeout(() => {
+      const i = current();
+      if (i !== indexRef.current && images[i]) onSelect(i);
+    }, SETTLE);
+  };
+  useEffect(() => () => window.clearTimeout(settle.current), []);
 
   const image = images[index];
   const height = width && image ? (width * image.height) / image.width : undefined;
 
   return (
-    <div
-      ref={ref}
-      className="strip"
-      style={{ height }}
-      onScroll={() => {
-        const i = current();
-        if (i !== index && images[i]) onSelect(i);
-      }}
-    >
+    <div ref={ref} className="strip" style={{ height }} onScroll={onScroll}>
       {images.map((img, i) => (
-        <div key={i} className="slide">
-          <MediaItem
-            image={img}
-            alt={`${label} — ${i + 1}/${images.length}`}
-            active={i === index}
-            lazy={Math.abs(i - index) > 1}
-            onLoaded={onLoaded}
-          />
+        <div key={i} className="slide" style={{ aspectRatio: `${img.width} / ${img.height}` }}>
+          {Math.abs(i - index) <= NEAR && (
+            <MediaItem
+              image={img}
+              alt={`${label} — ${i + 1}/${images.length}`}
+              active={i === index}
+              onLoaded={onLoaded}
+            />
+          )}
         </div>
       ))}
     </div>
@@ -314,14 +333,12 @@ function MediaItem({
   image,
   alt,
   active,
-  lazy,
   onLoaded,
   onClick,
 }: {
   image: Image;
   alt: string;
   active: boolean;
-  lazy?: boolean;
   onLoaded: (src: string) => void;
   onClick?: () => void;
 }) {
@@ -346,9 +363,9 @@ function MediaItem({
       loop
       autoPlay={active}
       playsInline
-      preload={lazy ? "metadata" : "auto"}
+      preload={active ? "auto" : "metadata"}
       aria-label={alt}
-      onLoadedData={done}
+      onLoadedMetadata={done}
       onError={done}
       onClick={onClick}
     />
@@ -360,7 +377,6 @@ function MediaItem({
       height={image.height}
       style={style}
       alt={alt}
-      loading={lazy ? "lazy" : "eager"}
       onLoad={done}
       onError={done}
       onClick={onClick}

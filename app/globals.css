@@ -110,9 +110,11 @@ button {
   }
 }
 
-/* Feedback on closing: the title turns red while the image fades out, then back to black. */
-.project.is-open.is-closing .title {
-  color: var(--accent);
+/* Touch screens: the title turns black as soon as the project is tapped closed. */
+@media (hover: none) {
+  .project.is-open.is-closing .title {
+    color: var(--fg);
+  }
 }
 
 .count {
@@ -231,6 +233,7 @@ figure video {
   overflow-y: hidden;
   scroll-snap-type: x mandatory;
   overscroll-behavior-x: contain;
+  gap: var(--margin);
   scrollbar-width: none;
   transition: height 300ms var(--ease);
 }
