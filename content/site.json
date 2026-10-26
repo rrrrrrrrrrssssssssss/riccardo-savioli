@@ -949,8 +949,20 @@
       ]
     },
     "american-haiku": {
-      "caption": "",
-      "images": []
+      "caption": "Art direction by Studio Temp. Web developing by Tilt. May 2025 ",
+      "images": [
+        {
+          "src": "/projects/american-haiku/mvp6jsqpc6ix.mp4",
+          "width": 576,
+          "height": 720,
+          "video": true
+        },
+        {
+          "src": "/projects/american-haiku/mvp6jr34hwsp.webp",
+          "width": 720,
+          "height": 900
+        }
+      ]
     },
     "alessi-abloh-conversational-objects": {
       "caption": "",
