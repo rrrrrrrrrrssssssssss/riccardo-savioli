@@ -602,8 +602,50 @@
       "caption": "Exhibition curated by Chloe e Mahfuz Sultan, Alessio Ascari and Nike Architecture. Art direction of the visual identity by Studio Temp. Graphic design in collaboration with Nicolò Oriani e Giacomo Ponasso. Exhibition Design by Playlab INC. Motion graphics by SomethingSpecialStudio. Dec 2022.",
       "images": [
         {
-          "src": "/projects/virgil-abloh-the-codes/mvp4o5p4rmv1.webp",
-          "width": 717,
+          "src": "/projects/virgil-abloh-the-codes/mvp58da9tk2t.mp4",
+          "width": 480,
+          "height": 640,
+          "video": true
+        },
+        {
+          "src": "/projects/virgil-abloh-the-codes/mvp58gnzip4a.mp4",
+          "width": 360,
+          "height": 478,
+          "video": true
+        },
+        {
+          "src": "/projects/virgil-abloh-the-codes/mvp58k5s7g1n.webp",
+          "width": 676,
+          "height": 900
+        },
+        {
+          "src": "/projects/virgil-abloh-the-codes/mvp54minsc0g.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/virgil-abloh-the-codes/mvp54o4ektdh.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/virgil-abloh-the-codes/mvp576bxlm8u.webp",
+          "width": 1602,
+          "height": 900
+        },
+        {
+          "src": "/projects/virgil-abloh-the-codes/mvp58gciv1v4.webp",
+          "width": 676,
+          "height": 900
+        },
+        {
+          "src": "/projects/virgil-abloh-the-codes/mvp58n8l06bz.webp",
+          "width": 676,
+          "height": 900
+        },
+        {
+          "src": "/projects/virgil-abloh-the-codes/mvp58ouppro3.webp",
+          "width": 676,
           "height": 900
         }
       ]
