@@ -834,7 +834,53 @@
     },
     "c41-magazine": {
       "caption": "Project realized in collaboration with Nicolò Oriani. Supported by QuadroDesign. 230 × 300 mm. Apr 023.\n",
-      "images": []
+      "images": [
+        {
+          "src": "/projects/c41-magazine/mvp66t168f5q.webp",
+          "width": 720,
+          "height": 900
+        },
+        {
+          "src": "/projects/c41-magazine/mvp66ol9gvix.webp",
+          "width": 720,
+          "height": 900
+        },
+        {
+          "src": "/projects/c41-magazine/mvp66n32jgdf.webp",
+          "width": 720,
+          "height": 900
+        },
+        {
+          "src": "/projects/c41-magazine/mvp66mawi4eq.webp",
+          "width": 721,
+          "height": 900
+        },
+        {
+          "src": "/projects/c41-magazine/mvp66ntx1tt8.webp",
+          "width": 722,
+          "height": 900
+        },
+        {
+          "src": "/projects/c41-magazine/mvp66q2ey5vd.webp",
+          "width": 721,
+          "height": 900
+        },
+        {
+          "src": "/projects/c41-magazine/mvp66r444e85.webp",
+          "width": 721,
+          "height": 900
+        },
+        {
+          "src": "/projects/c41-magazine/mvp66ru9bbus.webp",
+          "width": 721,
+          "height": 900
+        },
+        {
+          "src": "/projects/c41-magazine/mvp66s8uulye.webp",
+          "width": 721,
+          "height": 900
+        }
+      ]
     },
     "acerbis": {
       "caption": "",
