@@ -545,7 +545,48 @@
     },
     "aldo": {
       "caption": "Exhibition by Francesco Bellagamba and Paolo Gentili. Hosted by Quattro Milano. Exhibition Design by Pietro Lora. Installation views by Cecilia Rabeschi. Oct 2025.",
-      "images": []
+      "images": [
+        {
+          "src": "/projects/aldo/mvp4aci9srbl.webp",
+          "width": 675,
+          "height": 900
+        },
+        {
+          "src": "/projects/aldo/mvp4afd7cb71.webp",
+          "width": 675,
+          "height": 900
+        },
+        {
+          "src": "/projects/aldo/mvp4aesyg9hi.webp",
+          "width": 675,
+          "height": 900
+        },
+        {
+          "src": "/projects/aldo/mvp4adb6xi8g.webp",
+          "width": 675,
+          "height": 900
+        },
+        {
+          "src": "/projects/aldo/mvp4a8wizutc.webp",
+          "width": 675,
+          "height": 900
+        },
+        {
+          "src": "/projects/aldo/mvp4ab89w9ya.webp",
+          "width": 675,
+          "height": 900
+        },
+        {
+          "src": "/projects/aldo/mvp4abvskjoy.webp",
+          "width": 675,
+          "height": 900
+        },
+        {
+          "src": "/projects/aldo/mvp4a8469goq.webp",
+          "width": 675,
+          "height": 900
+        }
+      ]
     },
     "virgil-abloh-the-codes": {
       "caption": "",
