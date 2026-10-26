@@ -1,87 +1,172 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 
-// Landing effect: every character starts as a random red glyph, holds for HOLD ms, then each one
-// turns back into its real character at a random moment within REVEAL ms, grey for GLITCH_GREY ms
-// and then black (the same colours as the recurring effect below).
+// All the text animations of the site. Characters go through these colours: a red glyph
+// (mostly dots, some ! and ?), then their letter in grey for GREY ms, then the plain letter.
+const GLYPHS = "........!?";
+const GREY = 400;
+
+// Landing: every character starts as a red glyph, holds for HOLD ms, then each one turns back into
+// its letter at a random moment within REVEAL ms.
 const HOLD = 1000;
 const REVEAL = 2500;
-const GLYPHS = "........!?"; // mostly dots
 
-// Recurring effect once the landing is over: the reverse of the landing, quicker. It comes
+// Recurring glitch once the landing is over: the reverse of the landing, quicker. It comes
 // FIRST_GLITCH ms after the landing, SECOND_GLITCH ms after the end of the first, then
 // LATER_GLITCH ms after the end of each one. Each character turns into a red glyph at a random
 // moment within GLITCH_OUT ms, they all hold for GLITCH_HOLD ms, then each turns back into its
-// letter within GLITCH_BACK ms, grey for GLITCH_GREY ms, then black again.
+// letter within GLITCH_BACK ms.
 const FIRST_GLITCH = 15_000;
 const SECOND_GLITCH = 30_000;
 const LATER_GLITCH = 60_000;
 const GLITCH_OUT = 500;
 const GLITCH_HOLD = 250;
 const GLITCH_BACK = 500;
-const GLITCH_GREY = 400;
-const GLITCH = GLITCH_OUT + GLITCH_HOLD + GLITCH_BACK + GLITCH_GREY;
+const GLITCH = GLITCH_OUT + GLITCH_HOLD + GLITCH_BACK + GREY;
 
-type ClockValue = {
-  landing: number; // ms since landing; Infinity = finished
-  glitch: { id: number; t: number } | null; // the running recurring effect, if any
-};
+// Idle: after IDLE ms without any activity, the letters disappear one by one within VANISH ms (open
+// images and captions fade out too). On the next activity they come back: each appears as a red
+// glyph within WAKE_IN ms, they hold for WAKE_HOLD ms, then turn into letters within WAKE_BACK ms.
+const IDLE = 60_000;
+const VANISH = 1200;
+const WAKE_IN = 400;
+const WAKE_HOLD = 200;
+const WAKE_BACK = 600;
+const WAKE = WAKE_IN + WAKE_HOLD + WAKE_BACK + GREY;
 
-const Clock = createContext<ClockValue>({ landing: Infinity, glitch: null });
+// HIGHLIGHT_AFTER ms after each animation with glyphs, the project names light up one after the
+// other from top to bottom: red for HIGHLIGHT_RED ms, then grey for HIGHLIGHT_GREY ms, each one
+// starting HIGHLIGHT_STAGGER ms after the previous one.
+const HIGHLIGHT_AFTER = 5000;
+const HIGHLIGHT_STAGGER = 90;
+const HIGHLIGHT_RED = 200;
+const HIGHLIGHT_GREY = 250;
+
+type Anim =
+  | { kind: "landing"; id: number; t: number }
+  | { kind: "glitch"; id: number; t: number }
+  | { kind: "vanish"; id: number; t: number } // stays at its end (hidden) until activity
+  | { kind: "wake"; id: number; t: number }
+  | null;
+
+const Clock = createContext<Anim>(null);
+const Highlight = createContext<number | null>(null); // ms since the highlight started
+
+/** Time since the project names started lighting up, or null. */
+export const useHighlight = () => useContext(Highlight);
+
+/** Colour of the project name at position `order` (0 = first) during the highlight. */
+export function highlightClass(t: number | null, order: number) {
+  if (t === null) return "";
+  const local = t - order * HIGHLIGHT_STAGGER;
+  if (local < 0) return "";
+  if (local < HIGHLIGHT_RED) return " hl-red";
+  if (local < HIGHLIGHT_RED + HIGHLIGHT_GREY) return " hl-grey";
+  return "";
+}
 
 export function ScrambleClock({ children }: { children: React.ReactNode }) {
-  const [landing, setLanding] = useState(0);
-  const [glitch, setGlitch] = useState<ClockValue["glitch"]>(null);
+  const [anim, setAnim] = useState<Anim>({ kind: "landing", id: 0, t: 0 });
+  const [highlight, setHighlight] = useState<number | null>(null);
+  const current = useRef<Anim>(anim);
+  current.current = anim;
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setLanding(Infinity);
+      setAnim(null);
       return;
     }
-    const start = performance.now();
-    let frame = requestAnimationFrame(function tick(now) {
-      const t = now - start;
-      if (t >= HOLD + REVEAL + GLITCH_GREY) return setLanding(Infinity);
-      setLanding(t);
-      frame = requestAnimationFrame(tick);
-    });
-    return () => cancelAnimationFrame(frame);
+
+    let frame = 0;
+    let highlightFrame = 0;
+    let highlightTimer = 0;
+    let glitchTimer = 0;
+    let ids = 0;
+
+    // Lights up the project names, HIGHLIGHT_AFTER ms after an animation with glyphs.
+    const scheduleHighlight = () => {
+      window.clearTimeout(highlightTimer);
+      highlightTimer = window.setTimeout(() => {
+        const count = document.querySelectorAll(".project").length;
+        const total = (count - 1) * HIGHLIGHT_STAGGER + HIGHLIGHT_RED + HIGHLIGHT_GREY;
+        const start = performance.now();
+        cancelAnimationFrame(highlightFrame);
+        highlightFrame = requestAnimationFrame(function tick(now) {
+          const t = now - start;
+          if (t >= total) return setHighlight(null);
+          setHighlight(t);
+          highlightFrame = requestAnimationFrame(tick);
+        });
+      }, HIGHLIGHT_AFTER);
+    };
+
+    // Runs one animation frame by frame. A vanish stays at its end (letters hidden).
+    const play = (kind: Exclude<Anim, null>["kind"], duration: number) => {
+      const id = ++ids;
+      const start = performance.now();
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(function tick(now) {
+        const t = now - start;
+        if (t >= duration) {
+          if (kind === "vanish") return setAnim({ kind, id, t: duration });
+          setAnim(null);
+          return scheduleHighlight();
+        }
+        setAnim({ kind, id, t });
+        frame = requestAnimationFrame(tick);
+      });
+    };
+
+    play("landing", HOLD + REVEAL + GREY);
+
+    // Recurring glitch, skipped while something else is playing or nobody is looking.
+    let round = 0;
+    const glitch = () => {
+      if (!document.hidden && current.current === null) play("glitch", GLITCH);
+      round++;
+      const next = round === 1 ? SECOND_GLITCH : LATER_GLITCH;
+      glitchTimer = window.setTimeout(glitch, GLITCH + next);
+    };
+    glitchTimer = window.setTimeout(glitch, HOLD + REVEAL + GREY + FIRST_GLITCH);
+
+    // Idle: vanish after IDLE ms without activity; come back on the next one.
+    let lastActivity = performance.now();
+    const onActivity = () => {
+      lastActivity = performance.now();
+      if (current.current?.kind === "vanish") play("wake", WAKE);
+    };
+    const events = ["pointermove", "pointerdown", "keydown", "wheel", "touchstart", "scroll"];
+    for (const e of events) window.addEventListener(e, onActivity, { passive: true });
+    const idleCheck = window.setInterval(() => {
+      if (
+        current.current === null &&
+        !document.hidden &&
+        performance.now() - lastActivity >= IDLE
+      ) {
+        play("vanish", VANISH);
+      }
+    }, 1000);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      cancelAnimationFrame(highlightFrame);
+      window.clearTimeout(highlightTimer);
+      window.clearTimeout(glitchTimer);
+      window.clearInterval(idleCheck);
+      for (const e of events) window.removeEventListener(e, onActivity);
+    };
   }, []);
 
-  useEffect(() => {
-    if (landing !== Infinity || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      return;
-    }
-    let id = 0;
-    let frame = 0;
-    let timer = 0;
-    const delay = (round: number) =>
-      round === 0 ? FIRST_GLITCH : round === 1 ? SECOND_GLITCH : LATER_GLITCH;
-    const run = () => {
-      // Skipped while nobody is looking, but it still counts as a round.
-      if (!document.hidden) {
-        const start = performance.now();
-        const round = id;
-        cancelAnimationFrame(frame);
-        frame = requestAnimationFrame(function tick(now) {
-          const t = now - start;
-          if (t >= GLITCH) return setGlitch(null);
-          setGlitch({ id: round, t });
-          frame = requestAnimationFrame(tick);
-        });
-      }
-      id++;
-      timer = window.setTimeout(run, GLITCH + delay(id)); // counted from the end of this round
-    };
-    timer = window.setTimeout(run, delay(0));
-    return () => {
-      window.clearTimeout(timer);
-      cancelAnimationFrame(frame);
-    };
-  }, [landing === Infinity]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  return <Clock.Provider value={{ landing, glitch }}>{children}</Clock.Provider>;
+  // Images and captions fade with the letters while idle (see .is-idle in app/globals.css).
+  const idle = anim?.kind === "vanish";
+  return (
+    <Clock.Provider value={anim}>
+      <Highlight.Provider value={highlight}>
+        <div className={idle ? "anim-root is-idle" : "anim-root"}>{children}</div>
+      </Highlight.Provider>
+    </Clock.Provider>
+  );
 }
 
 // Deterministic pseudo-random value in [0, 1) so server and client render the same first frame.
@@ -95,57 +180,65 @@ function seeded(text: string, i: number) {
 const pick = (r: number) => GLYPHS[Math.floor(r * GLYPHS.length)];
 const randomGlyphs = (text: string) =>
   Array.from(text, (c) => (c === " " ? " " : pick(Math.random())));
+const randomTimes = (text: string, from: number, span: number) =>
+  Array.from(text, () => from + Math.random() * span);
 
-type CharState = "letter" | "glyph" | "grey";
+type CharState = "letter" | "glyph" | "grey" | "hidden";
 
 export function Scramble({ text }: { text: string }) {
-  const { landing, glitch } = useContext(Clock);
+  const anim = useContext(Clock);
 
-  const [glyphs, setGlyphs] = useState(() =>
+  // The landing's first frame is rendered on the server too, so its glyphs are seeded.
+  const [landingGlyphs, setLandingGlyphs] = useState(() =>
     Array.from(text, (c, i) => (c === " " ? " " : pick(seeded(text, i)))),
   );
-  const revealAt = useMemo(() => Array.from(text, () => HOLD + Math.random() * REVEAL), [text]);
-
+  const revealAt = useMemo(() => randomTimes(text, HOLD, REVEAL), [text]);
   // Fresh random glyphs on every visit (after hydration, so the markup matches).
   useEffect(() => {
-    setGlyphs(randomGlyphs(text));
+    setLandingGlyphs(randomGlyphs(text));
   }, [text]);
 
-  // New random glyphs and timings for each round of the recurring effect.
-  const glitchId = glitch?.id;
+  // New random glyphs and timings for each later animation.
+  const animId = anim && anim.kind !== "landing" ? `${anim.kind}${anim.id}` : null;
   const round = useMemo(
     () => ({
       glyphs: randomGlyphs(text),
-      outAt: Array.from(text, () => Math.random() * GLITCH_OUT),
-      backAt: Array.from(text, () => GLITCH_OUT + GLITCH_HOLD + Math.random() * GLITCH_BACK),
+      outAt: randomTimes(text, 0, anim?.kind === "vanish" ? VANISH : GLITCH_OUT),
+      backAt: randomTimes(text, GLITCH_OUT + GLITCH_HOLD, GLITCH_BACK),
+      inAt: randomTimes(text, 0, WAKE_IN),
+      wakeBackAt: randomTimes(text, WAKE_IN + WAKE_HOLD, WAKE_BACK),
     }),
-    [text, glitchId],
+    [text, animId], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  // Each character is a red glyph, then its letter in grey for a moment, then the plain letter.
-  const stateAt = (t: number, glyphUntil: number): CharState =>
-    t < glyphUntil ? "glyph" : t < glyphUntil + GLITCH_GREY ? "grey" : "letter";
+  if (!anim) return text;
 
-  let states: CharState[];
-  let shownGlyphs: string[];
-  if (landing !== Infinity) {
-    states = Array.from(text, (c, i) => (c === " " ? "letter" : stateAt(landing, revealAt[i])));
-    shownGlyphs = glyphs;
-  } else if (glitch) {
-    const t = glitch.t;
-    states = Array.from(text, (c, i) =>
-      c === " " || t < round.outAt[i] ? "letter" : stateAt(t, round.backAt[i]),
-    );
-    shownGlyphs = round.glyphs;
-  } else {
-    return text;
-  }
+  // A red glyph until `until`, then the letter in grey for a moment, then the plain letter.
+  const backFrom = (t: number, until: number): CharState =>
+    t < until ? "glyph" : t < until + GREY ? "grey" : "letter";
 
-  // Group consecutive characters in the same state into one span (red glyphs, grey letters).
+  const t = anim.t;
+  const states: CharState[] = Array.from(text, (c, i) => {
+    if (c === " ") return "letter";
+    switch (anim.kind) {
+      case "landing":
+        return backFrom(t, revealAt[i]);
+      case "glitch":
+        return t < round.outAt[i] ? "letter" : backFrom(t, round.backAt[i]);
+      case "vanish":
+        return t < round.outAt[i] ? "letter" : "hidden";
+      case "wake":
+        return t < round.inAt[i] ? "hidden" : backFrom(t, round.wakeBackAt[i]);
+    }
+  });
+  const glyphs = anim.kind === "landing" ? landingGlyphs : round.glyphs;
+
+  // Group consecutive characters in the same state into one span. Hidden characters keep their
+  // letter (invisible), so the text keeps its layout while it vanishes.
   const runs: { state: CharState; text: string }[] = [];
   Array.from(text).forEach((c, i) => {
     const state = states[i];
-    const char = state === "glyph" ? shownGlyphs[i] : c;
+    const char = state === "glyph" ? glyphs[i] : c;
     const last = runs[runs.length - 1];
     if (last && last.state === state) last.text += char;
     else runs.push({ state, text: char });
@@ -158,7 +251,7 @@ export function Scramble({ text }: { text: string }) {
           run.state === "letter" ? (
             run.text
           ) : (
-            <span key={k} className={run.state === "glyph" ? "glitch-glyph" : "glitch-grey"}>
+            <span key={k} className={`glitch-${run.state}`}>
               {run.text}
             </span>
           ),

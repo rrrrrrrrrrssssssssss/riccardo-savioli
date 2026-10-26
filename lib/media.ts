@@ -6,12 +6,14 @@ const IMAGE_MAX_HEIGHT = 900;
 const IMAGE_MAX_WIDTH = 2400;
 const IMAGE_QUALITY = 0.85;
 
-// Videos: H.264 MP4 without audio. Uploads go through a Vercel function (4.5 MB body limit),
-// so the bitrate is chosen to fit the whole clip in VIDEO_MAX_BYTES.
+// Videos: H.264 MP4 without audio. The bitrate follows the resolution (VIDEO_BITS_PER_PIXEL per
+// pixel per frame at 30 fps, enough at the sizes they are shown), so files stay light; and since
+// uploads go through a Vercel function (4.5 MB body limit) it never exceeds what fits the whole
+// clip in VIDEO_MAX_BYTES.
 const VIDEO_MAX_HEIGHT = 720;
 const VIDEO_MAX_WIDTH = 1280;
 const VIDEO_MAX_BYTES = 4 * 1024 * 1024;
-const VIDEO_MAX_BITRATE = 2_500_000;
+const VIDEO_BITS_PER_PIXEL = 0.07;
 const VIDEO_MIN_BITRATE = 400_000;
 
 export type Converted = {
@@ -108,18 +110,19 @@ async function convertVideo(file: File, onProgress?: (p: number) => void): Promi
   if (!track) throw new Error("Nel file non c'è nessun video");
   const duration = await input.computeDuration();
 
-  const bitrate = Math.min(VIDEO_MAX_BITRATE, Math.floor((VIDEO_MAX_BYTES * 8 * 0.9) / duration));
-  if (bitrate < VIDEO_MIN_BITRATE) {
+  const budget = Math.floor((VIDEO_MAX_BYTES * 8 * 0.9) / duration);
+  if (budget < VIDEO_MIN_BITRATE) {
     const max = Math.floor((VIDEO_MAX_BYTES * 8 * 0.9) / VIDEO_MIN_BITRATE);
     throw new Error(`Video troppo lungo (${Math.round(duration)} s): il massimo è circa ${max} s`);
   }
 
-  // Lower bitrates look better at a lower resolution.
-  const maxHeight = bitrate < 1_000_000 ? 480 : VIDEO_MAX_HEIGHT;
+  // Long clips get a small budget, which looks better at a lower resolution.
+  const maxHeight = budget < 1_000_000 ? 480 : VIDEO_MAX_HEIGHT;
   const scale = Math.min(1, maxHeight / track.displayHeight, VIDEO_MAX_WIDTH / track.displayWidth);
   const even = (n: number) => Math.max(2, Math.round(n / 2) * 2);
   const width = even(track.displayWidth * scale);
   const height = even(track.displayHeight * scale);
+  const bitrate = Math.min(budget, Math.round(width * height * 30 * VIDEO_BITS_PER_PIXEL));
 
   const output = new Output({
     format: new Mp4OutputFormat({ fastStart: "in-memory" }),

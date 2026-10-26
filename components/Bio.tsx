@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Block, Image, Project } from "@/lib/content";
 import { splitLabel } from "@/lib/label";
-import { Scramble, ScrambleClock } from "./Scramble";
+import { Scramble, ScrambleClock, highlightClass, useHighlight } from "./Scramble";
 
 // Keep in sync with app/globals.css: --open-duration, and the caption + image fade-out (--fade × 1.8).
 const OPEN_DURATION = 600;
@@ -110,6 +110,7 @@ export default function Bio({ blocks }: { blocks: Block[] }) {
           return (
             <ProjectLine
               key={b.slug}
+              order={blocks.slice(0, i).filter((x) => x.type === "project").length}
               slug={b.slug}
               label={b.label}
               project={b.project}
@@ -129,6 +130,7 @@ export default function Bio({ blocks }: { blocks: Block[] }) {
 
 function ProjectLine({
   slug,
+  order,
   label,
   project,
   isOpen,
@@ -139,6 +141,7 @@ function ProjectLine({
   onSelect,
 }: {
   slug: string;
+  order: number; // position among the projects, for the top-to-bottom highlight
   label: string;
   project: Project;
   isOpen: boolean;
@@ -148,6 +151,7 @@ function ProjectLine({
   onStep: (delta: number) => void;
   onSelect: (index: number) => void;
 }) {
+  const highlight = useHighlight();
   const mobile = useMediaQuery("(max-width: 767px)");
   const lineRef = useRef<HTMLParagraphElement>(null);
   const labelRef = useRef<HTMLSpanElement>(null);
@@ -287,7 +291,7 @@ function ProjectLine({
       >
         {/* Inline (not a <button>) so the counter can follow the last line of a long title. */}
         <span
-          className="title"
+          className={`title${highlightClass(highlight, order)}`}
           role="button"
           tabIndex={total ? 0 : -1}
           aria-disabled={total === 0}
@@ -330,10 +334,10 @@ function ProjectLine({
             <span ref={navsBreak} className="break" />
             <span ref={navsRef} className="navs">
               <button className="nav" onClick={() => onStep(-1)}>
-                Back
+                <Scramble text="Back" />
               </button>
               <button className="nav" onClick={() => onStep(1)}>
-                Next
+                <Scramble text="Next" />
               </button>
             </span>
           </>

@@ -329,3 +329,31 @@ figure video {
 .glitch-grey {
   color: var(--muted);
 }
+
+/* Idle (components/Scramble.tsx): letters vanish, keeping their place. */
+.glitch-hidden {
+  color: transparent;
+}
+
+.anim-root {
+  display: contents;
+}
+
+/* Open images and captions fade out with the letters, and come back once the letters have. */
+figure {
+  transition: opacity 600ms ease 900ms;
+}
+
+.is-idle figure {
+  opacity: 0;
+  transition: opacity 800ms ease;
+}
+
+/* Project names lighting up from top to bottom (components/Scramble.tsx), over any other state. */
+.title.hl-red {
+  color: var(--accent) !important;
+}
+
+.title.hl-grey {
+  color: var(--muted) !important;
+}
