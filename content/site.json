@@ -1298,8 +1298,60 @@
       ]
     },
     "quadro-design": {
-      "caption": "",
-      "images": []
+      "caption": "Project made in collaboration with Nicolò Oriani.\nPhoto by Luca A. Caizzi.\nApr 026.",
+      "images": [
+        {
+          "src": "/projects/quadro-design/mvp9kh8khhat.webp",
+          "width": 675,
+          "height": 900
+        },
+        {
+          "src": "/projects/quadro-design/mvp9kifvkgvk.mp4",
+          "width": 576,
+          "height": 720,
+          "video": true
+        },
+        {
+          "src": "/projects/quadro-design/mvp9kkgb7c3o.webp",
+          "width": 675,
+          "height": 900
+        },
+        {
+          "src": "/projects/quadro-design/mvp9kjpnlx49.webp",
+          "width": 675,
+          "height": 900
+        },
+        {
+          "src": "/projects/quadro-design/mvp9l6dw2igj.webp",
+          "width": 675,
+          "height": 900
+        },
+        {
+          "src": "/projects/quadro-design/mvp9kj1b4p3k.webp",
+          "width": 675,
+          "height": 900
+        },
+        {
+          "src": "/projects/quadro-design/mvp9klndq8kh.webp",
+          "width": 675,
+          "height": 900
+        },
+        {
+          "src": "/projects/quadro-design/mvp9kmd5o1bg.webp",
+          "width": 675,
+          "height": 900
+        },
+        {
+          "src": "/projects/quadro-design/mvp9kn0v9i1r.webp",
+          "width": 675,
+          "height": 900
+        },
+        {
+          "src": "/projects/quadro-design/mvp9kntovu4c.webp",
+          "width": 675,
+          "height": 900
+        }
+      ]
     },
     "foa": {
       "caption": "",
