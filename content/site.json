@@ -651,8 +651,55 @@
       ]
     },
     "martisor": {
-      "caption": "",
-      "images": []
+      "caption": "Photographic project by Rebeca Margescu. Project made in collaboration with Nicolò Oriani. Self-published. Edition of 50. 210 × 297 mm, 60 p. Printed in Apr 2023.",
+      "images": [
+        {
+          "src": "/projects/martisor/mvp5otlcenna.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/martisor/mvp5op7kufij.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/martisor/mvp5oysd44pc.mp4",
+          "width": 720,
+          "height": 720,
+          "video": true
+        },
+        {
+          "src": "/projects/martisor/mvp5ov7po1ch.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/martisor/mvp5or6cnjw2.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/martisor/mvp5orsuvszs.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/martisor/mvp5osd7to6l.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/martisor/mvp5ouibma3o.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/martisor/mvp5opvffs5v.webp",
+          "width": 750,
+          "height": 750
+        }
+      ]
     },
     "centolire-multitools": {
       "caption": "Project realized in collaboration with Nicolò Oriani. Supported by QuadroDesign. First edition of 100. 100 × 130 mm, 512 p. Printed in May 025.",
