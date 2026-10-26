@@ -1030,8 +1030,51 @@
       ]
     },
     "materia": {
-      "caption": "",
-      "images": []
+      "caption": "Art Direction by Studio Temp. Co-published by Lenz Press and Cobogó. 170 × 235 mm, 200 p. Feb 2022",
+      "images": [
+        {
+          "src": "/projects/materia/mvp8umkhv3op.webp",
+          "width": 901,
+          "height": 900
+        },
+        {
+          "src": "/projects/materia/mvp8usk00g44.mp4",
+          "width": 720,
+          "height": 720,
+          "video": true
+        },
+        {
+          "src": "/projects/materia/mvp8ujgqyaa4.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/materia/mvp8uk9w10vc.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/materia/mvp8ul3x25m1.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/materia/mvp8uitrvn3s.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/materia/mvp8und4yhwh.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/materia/mvp8uwa5jdmi.mp4",
+          "width": 720,
+          "height": 720,
+          "video": true
+        }
+      ]
     },
     "volume-i-cc-tapis": {
       "caption": "",
