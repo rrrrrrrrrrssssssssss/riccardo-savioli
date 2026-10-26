@@ -67,7 +67,7 @@
     {
       "type": "project",
       "slug": "c41-magazine",
-      "label": "redesign of C41 Magazine."
+      "label": "Redesign of C41 Magazine."
     },
     {
       "type": "text",
@@ -833,7 +833,7 @@
       ]
     },
     "c41-magazine": {
-      "caption": "",
+      "caption": "Project realized in collaboration with Nicolò Oriani. Supported by QuadroDesign. 230 × 300 mm. Apr 023.\n",
       "images": []
     },
     "acerbis": {
