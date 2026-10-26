@@ -417,7 +417,7 @@
   column-gap: 6px;
   row-gap: 2px;
   padding: 8px 10px;
-  font-size: 17px;
+  font-size: 15px;
   border: 1px solid var(--line);
 }
 
@@ -428,7 +428,7 @@
 .admin .sentence .part {
   display: inline-block;
   width: auto;
-  min-width: 2ch;
+  min-width: 1ch;
   max-width: 100%;
   field-sizing: content;
   padding: 2px 0;
