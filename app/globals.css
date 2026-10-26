@@ -95,29 +95,23 @@ button {
 
 .count {
   margin-left: 1.25em;
-  font-variant-numeric: tabular-nums;
-}
-
-.count .num {
-  display: inline-block;
-  text-align: right;
 }
 
 .nav {
   margin-left: 1em;
 }
 
-/* Carousel panel. Opening: the text moves to make room, then the image fades in, then the caption.
-   Closing: the caption fades out, then the image, then the text closes up. */
+/* Carousel panel. Opening: the text moves to make room, then the image fades in, then the caption
+   (once the image has loaded). Closing: the caption fades out, then the image, then the text closes up.
+   The sequencing is driven by components/Bio.tsx through the is-open and is-shown classes. */
 .panel {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows var(--open-duration) var(--ease) calc(var(--fade) * 1.8);
+  transition: grid-template-rows var(--open-duration) var(--ease);
 }
 
 .project.is-open .panel {
   grid-template-rows: 1fr;
-  transition-delay: 0ms;
 }
 
 /* Keyframe animations rather than transitions, so the fade also runs when the image
@@ -125,21 +119,24 @@ button {
 .media,
 .caption {
   opacity: 0;
+}
+
+.project.is-hiding .caption {
   animation: fade-out var(--fade) ease both;
 }
 
-.media {
-  animation-delay: calc(var(--fade) * 0.8);
+.project.is-hiding .media {
+  animation: fade-out var(--fade) ease calc(var(--fade) * 0.8) both;
 }
 
-.project.is-open .media,
-.project.is-open .caption {
+.project.is-shown .media,
+.project.is-shown .caption {
   opacity: 1;
-  animation: fade-in var(--fade) ease var(--open-duration) both;
+  animation: fade-in var(--fade) ease var(--reveal-delay) both;
 }
 
-.project.is-open .caption {
-  animation-delay: calc(var(--open-duration) + var(--fade) * 0.8);
+.project.is-shown .caption {
+  animation-delay: calc(var(--reveal-delay) + var(--fade) * 0.8);
 }
 
 @keyframes fade-in {

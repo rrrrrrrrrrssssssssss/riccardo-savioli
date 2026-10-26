@@ -4,12 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import type { Block, Project } from "@/lib/content";
 import { Scramble, ScrambleClock } from "./Scramble";
 
-// Time the open project needs to fade out its caption and image before collapsing
-// (see --fade in app/globals.css); another project opens only after that.
-const SWITCH_DELAY = 450;
+// Keep in sync with app/globals.css: --open-duration, and the caption + image fade-out (--fade × 1.8).
+const OPEN_DURATION = 600;
+const CLOSE_FADE = 450;
 
 export default function Bio({ blocks }: { blocks: Block[] }) {
   const [open, setOpen] = useState<{ slug: string; index: number } | null>(null);
+  // The open project is fading out its caption and image before its panel collapses.
+  const [closing, setClosing] = useState(false);
 
   const openProject = blocks.find(
     (b): b is Extract<Block, { type: "project" }> => b.type === "project" && b.slug === open?.slug,
@@ -19,13 +21,22 @@ export default function Bio({ blocks }: { blocks: Block[] }) {
   const step = (delta: number) =>
     setOpen((o) => o && { ...o, index: (o.index + delta + total) % total });
 
-  const switchTimer = useRef<number | undefined>(undefined);
+  // Closing fades out first; then, in the same frame, the old panel collapses and the new one
+  // (if any) opens, so only the text between the two projects moves.
+  const timer = useRef<number | undefined>(undefined);
   const toggle = (slug: string) => {
-    window.clearTimeout(switchTimer.current);
-    if (open?.slug === slug) return setOpen(null);
-    if (!open) return setOpen({ slug, index: 0 });
-    setOpen(null);
-    switchTimer.current = window.setTimeout(() => setOpen({ slug, index: 0 }), SWITCH_DELAY);
+    window.clearTimeout(timer.current);
+    if (!open) {
+      setClosing(false);
+      return setOpen({ slug, index: 0 });
+    }
+    if (open.slug === slug && closing) return setClosing(false); // reopened while fading out
+    const next = open.slug === slug ? null : { slug, index: 0 };
+    setClosing(true);
+    timer.current = window.setTimeout(() => {
+      setClosing(false);
+      setOpen(next);
+    }, CLOSE_FADE);
   };
 
   useEffect(() => {
@@ -33,7 +44,7 @@ export default function Bio({ blocks }: { blocks: Block[] }) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") step(1);
       else if (e.key === "ArrowLeft") step(-1);
-      else if (e.key === "Escape") setOpen(null);
+      else if (e.key === "Escape" && !closing) toggle(open.slug);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -74,6 +85,7 @@ export default function Bio({ blocks }: { blocks: Block[] }) {
               label={b.label}
               project={b.project}
               isOpen={isOpen}
+              isClosing={isOpen && closing}
               index={isOpen ? open.index : 0}
               onToggle={() => toggle(b.slug)}
               onStep={step}
@@ -89,6 +101,7 @@ function ProjectLine({
   label,
   project,
   isOpen,
+  isClosing,
   index,
   onToggle,
   onStep,
@@ -96,11 +109,12 @@ function ProjectLine({
   label: string;
   project: Project;
   isOpen: boolean;
+  isClosing: boolean;
   index: number;
   onToggle: () => void;
   onStep: (delta: number) => void;
 }) {
-  // Images are only loaded once the project has been opened the first time.
+  // Images load once the title is hovered or the project opened, not with the page.
   const [mounted, setMounted] = useState(false);
   // While closing, keep showing the last image so it can fade out.
   const [shown, setShown] = useState(index);
@@ -113,6 +127,22 @@ function ProjectLine({
   const total = project.images.length;
   const image = project.images[isOpen ? index : shown];
 
+  // The image and caption fade in only once the image has loaded, and not before the text has
+  // finished moving: revealDelay is how long they still have to wait at that moment.
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const [revealDelay, setRevealDelay] = useState<number | null>(null);
+  const openedAt = useRef(0);
+  useEffect(() => {
+    if (isOpen) openedAt.current = performance.now();
+    else setRevealDelay(null);
+  }, [isOpen]);
+  useEffect(() => {
+    if (isOpen && revealDelay === null && image && loadedSrc === image.src) {
+      setRevealDelay(Math.max(0, OPEN_DURATION - (performance.now() - openedAt.current)));
+    }
+  }, [isOpen, revealDelay, image, loadedSrc]);
+  const loaded = () => image && setLoadedSrc(image.src);
+
   // Preload the neighbouring photos so moving through the carousel doesn't wait for them.
   useEffect(() => {
     if (!isOpen) return;
@@ -122,27 +152,26 @@ function ProjectLine({
     }
   }, [isOpen, index, project.images, total]);
 
-  const digits = String(total).length;
+  // is-shown fades image and caption in; is-hiding fades them out, only if they were visible.
+  const revealed = isOpen && revealDelay !== null;
+  const stateClass = revealed ? (isClosing ? " is-hiding" : " is-shown") : "";
 
   return (
-    <div className={`project${isOpen ? " is-open" : ""}`}>
+    <div
+      className={`project${isOpen ? " is-open" : ""}${stateClass}`}
+      style={{ "--reveal-delay": `${revealDelay ?? 0}ms` } as React.CSSProperties}
+    >
       <p className="line">
-        <button className="title" onClick={onToggle} aria-expanded={isOpen} disabled={total === 0}>
+        <button
+          className="title"
+          onClick={onToggle}
+          onMouseEnter={() => total && setMounted(true)}
+          aria-expanded={isOpen}
+          disabled={total === 0}
+        >
           <Scramble text={label} />
           <span className="count">
-            {isOpen ? (
-              // Fixed-width slot for the current number, so the parentheses never move.
-              <>
-                (
-                <span className="num" style={{ width: `${digits}ch` }}>
-                  {index + 1}
-                </span>
-                /{"\u2002"}
-                {total})
-              </>
-            ) : (
-              <Scramble text={`(${total})`} />
-            )}
+            <Scramble text={isOpen ? `(${index + 1}/ ${total})` : `(${total})`} />
           </span>
         </button>
         {isOpen && total > 1 && (
@@ -172,15 +201,20 @@ function ProjectLine({
                     autoPlay
                     playsInline
                     aria-label={`${label} — ${index + 1}/${total}`}
+                    onLoadedData={loaded}
+                    onError={loaded}
                     onClick={() => onStep(1)}
                   />
                 ) : (
                   /* eslint-disable-next-line @next/next/no-img-element */
                   <img
+                    key={image.src}
                     src={image.src}
                     width={image.width}
                     height={image.height}
                     alt={`${label} — ${index + 1}/${total}`}
+                    onLoad={loaded}
+                    onError={loaded}
                     onClick={() => onStep(1)}
                   />
                 )}
