@@ -10,14 +10,14 @@ const REVEAL = 2500;
 const GLYPHS = "........!?"; // mostly dots
 
 // Recurring effect once the landing is over: the reverse of the landing, quicker. It comes
-// FIRST_GLITCH ms after the landing, SECOND_GLITCH ms after that, then at a random interval
-// between LATER_GLITCH_MIN and LATER_GLITCH_MAX. Each character turns into a red glyph at a random moment within GLITCH_OUT ms, they
+// FIRST_GLITCH ms after the landing, SECOND_GLITCH ms after the end of the first, then each time
+// at a random interval between LATER_GLITCH_MIN and LATER_GLITCH_MAX after the end of the last. Each character turns into a red glyph at a random moment within GLITCH_OUT ms, they
 // all hold for GLITCH_HOLD ms, then each turns back into its letter within GLITCH_BACK ms, grey
 // for GLITCH_GREY ms, then black again.
-const FIRST_GLITCH = 20_000;
-const SECOND_GLITCH = 60_000;
-const LATER_GLITCH_MIN = 3 * 60_000;
-const LATER_GLITCH_MAX = 5 * 60_000;
+const FIRST_GLITCH = 15_000;
+const SECOND_GLITCH = 30_000;
+const LATER_GLITCH_MIN = 60_000;
+const LATER_GLITCH_MAX = 2 * 60_000;
 const GLITCH_OUT = 500;
 const GLITCH_HOLD = 250;
 const GLITCH_BACK = 500;
@@ -77,7 +77,7 @@ export function ScrambleClock({ children }: { children: React.ReactNode }) {
         });
       }
       id++;
-      timer = window.setTimeout(run, delay(id));
+      timer = window.setTimeout(run, GLITCH + delay(id)); // counted from the end of this round
     };
     timer = window.setTimeout(run, delay(0));
     return () => {

@@ -24,10 +24,10 @@
 @media (max-width: 767px) {
   :root {
     --margin: 10px;
-    --text-size: 17px;
-    --text-leading: 20.5px;
-    --caption-size: 11px;
-    --caption-leading: 12px;
+    --text-size: 16px;
+    --text-leading: 19.3px;
+    --caption-size: 10.4px;
+    --caption-leading: 11.3px;
   }
 }
 
