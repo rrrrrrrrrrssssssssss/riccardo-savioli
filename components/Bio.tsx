@@ -157,9 +157,12 @@ function ProjectLine({
   const navsBreak = useRef<HTMLSpanElement>(null);
 
   // When the counter doesn't fit on the title's last line, it starts a new line without the space
-  // before it; Back and Next likewise, together. Measured after every render and on resize.
+  // before it; Back and Next likewise, together. Measured after every render, and whenever the
+  // line changes shape without this component re-rendering: the letters of the landing and glitch
+  // animations (narrower glyphs), the web font arriving, the window resizing.
+  const fitRef = useRef(() => {});
   useLayoutEffect(() => {
-    const fit = () => {
+    fitRef.current = () => {
       const label = labelRef.current;
       const count = countRef.current;
       if (!label || !count) return;
@@ -187,10 +190,25 @@ function ProjectLine({
       wrap(countBreak, count, label);
       if (navsRef.current) wrap(navsBreak, navsRef.current, count);
     };
-    fit();
-    window.addEventListener("resize", fit);
-    return () => window.removeEventListener("resize", fit);
+    fitRef.current();
   });
+  useEffect(() => {
+    let frame = 0;
+    const refit = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => fitRef.current());
+    };
+    // The line's height changes whenever the counter moves to or from another line.
+    const observer = new ResizeObserver(refit);
+    observer.observe(lineRef.current!);
+    window.addEventListener("resize", refit);
+    document.fonts?.ready.then(refit);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", refit);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
   // Images load once the title is hovered or the project opened, not with the page.
   const [mounted, setMounted] = useState(false);
   // While closing, keep showing the last image so it can fade out.

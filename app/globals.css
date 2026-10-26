@@ -71,7 +71,14 @@ button {
 
 .bio {
   padding: var(--margin);
+  /* Room to scroll the end of the text up to the middle of the screen, and no further. */
+  padding-bottom: 50vh;
+  padding-bottom: 50svh;
   overflow-x: clip; /* scaled lines keep their unscaled layout width */
+}
+
+html {
+  overscroll-behavior-y: none; /* no rubber-band bounce past the end */
 }
 
 /* Horizontal scale: squeeze each text line, widening it so wrapping still uses the full width. */

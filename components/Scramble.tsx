@@ -10,14 +10,13 @@ const REVEAL = 2500;
 const GLYPHS = "........!?"; // mostly dots
 
 // Recurring effect once the landing is over: the reverse of the landing, quicker. It comes
-// FIRST_GLITCH ms after the landing, SECOND_GLITCH ms after the end of the first, then each time
-// at a random interval between LATER_GLITCH_MIN and LATER_GLITCH_MAX after the end of the last. Each character turns into a red glyph at a random moment within GLITCH_OUT ms, they
-// all hold for GLITCH_HOLD ms, then each turns back into its letter within GLITCH_BACK ms, grey
-// for GLITCH_GREY ms, then black again.
+// FIRST_GLITCH ms after the landing, SECOND_GLITCH ms after the end of the first, then
+// LATER_GLITCH ms after the end of each one. Each character turns into a red glyph at a random
+// moment within GLITCH_OUT ms, they all hold for GLITCH_HOLD ms, then each turns back into its
+// letter within GLITCH_BACK ms, grey for GLITCH_GREY ms, then black again.
 const FIRST_GLITCH = 15_000;
 const SECOND_GLITCH = 30_000;
-const LATER_GLITCH_MIN = 60_000;
-const LATER_GLITCH_MAX = 2 * 60_000;
+const LATER_GLITCH = 60_000;
 const GLITCH_OUT = 500;
 const GLITCH_HOLD = 250;
 const GLITCH_BACK = 500;
@@ -58,11 +57,7 @@ export function ScrambleClock({ children }: { children: React.ReactNode }) {
     let frame = 0;
     let timer = 0;
     const delay = (round: number) =>
-      round === 0
-        ? FIRST_GLITCH
-        : round === 1
-          ? SECOND_GLITCH
-          : LATER_GLITCH_MIN + Math.random() * (LATER_GLITCH_MAX - LATER_GLITCH_MIN);
+      round === 0 ? FIRST_GLITCH : round === 1 ? SECOND_GLITCH : LATER_GLITCH;
     const run = () => {
       // Skipped while nobody is looking, but it still counts as a round.
       if (!document.hidden) {
