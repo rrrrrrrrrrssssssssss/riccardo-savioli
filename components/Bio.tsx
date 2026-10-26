@@ -259,7 +259,14 @@ function ProjectLine({
         } as React.CSSProperties
       }
     >
-      <p className="line" ref={lineRef}>
+      {/* The whole line opens or closes the project (Back and Next excepted). */}
+      <p
+        className={`line${total ? " is-toggle" : ""}`}
+        ref={lineRef}
+        onClick={(e) => {
+          if (total && !(e.target as Element).closest(".navs")) onToggle();
+        }}
+      >
         {/* Inline (not a <button>) so the counter can follow the last line of a long title. */}
         <span
           className="title"
@@ -267,7 +274,6 @@ function ProjectLine({
           tabIndex={total ? 0 : -1}
           aria-disabled={total === 0}
           aria-expanded={isOpen}
-          onClick={() => total && onToggle()}
           onKeyDown={(e) => {
             if (total && (e.key === "Enter" || e.key === " ")) {
               e.preventDefault();
@@ -349,10 +355,10 @@ function ProjectLine({
   );
 }
 
-// Sentence text inside a project line: plain, not clickable, no hover.
+// Sentence text inside a project line: stays black, no hover colour.
 function Plain({ text }: { text: string }) {
   return (
-    <span className="punct" onClick={(e) => e.stopPropagation()}>
+    <span className="punct">
       <Scramble text={text} />
     </span>
   );

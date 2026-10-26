@@ -118,14 +118,13 @@ button {
   }
 }
 
-.title {
+.line.is-toggle {
   cursor: pointer;
 }
 
-/* The comma after a project name is plain text: always black, not clickable. */
+/* Words around a project name (articles, "by…", the comma) stay black and take no hover colour. */
 .title .punct {
   color: var(--fg);
-  cursor: default;
 }
 
 .count,
