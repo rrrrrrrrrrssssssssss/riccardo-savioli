@@ -19,6 +19,17 @@
   --ease: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
+/* Mobile: slightly larger text and margins, captions stay smaller than the text. */
+@media (max-width: 767px) {
+  :root {
+    --margin: 10px;
+    --text-size: 17px;
+    --text-leading: 20.5px;
+    --caption-size: 11px;
+    --caption-leading: 12px;
+  }
+}
+
 *,
 *::before,
 *::after {
@@ -34,6 +45,8 @@ html {
   font-size: var(--text-size);
   line-height: var(--text-leading);
   letter-spacing: var(--tracking);
+  -webkit-text-size-adjust: 100%; /* stop mobile Safari from enlarging small text (captions) */
+  text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -44,9 +57,6 @@ a {
   text-decoration: none;
 }
 
-a:hover {
-  color: var(--accent);
-}
 
 button {
   font: inherit;
@@ -80,17 +90,24 @@ button {
   cursor: default;
 }
 
-.title:not(:disabled):hover,
 .project.is-open .title {
   color: var(--muted);
 }
 
-.project.is-open .title:hover {
-  color: var(--accent);
-}
+/* Hover only with a mouse: on touch screens it would stick after a tap. */
+@media (hover: hover) {
+  a:hover,
+  .nav:hover {
+    color: var(--accent);
+  }
 
-.nav:hover {
-  color: var(--accent);
+  .title:not(:disabled):hover {
+    color: var(--muted);
+  }
+
+  .project.is-open .title:hover {
+    color: var(--accent);
+  }
 }
 
 .count {
@@ -210,6 +227,20 @@ figure video {
   figure img,
   figure video {
     max-width: var(--image-max-width);
+  }
+}
+
+/* Mobile: media span the full width at their own height. The width/height attributes reserve
+   that space before the file loads, so nothing jumps while loading. */
+@media (max-width: 767px) {
+  .media {
+    height: auto;
+  }
+
+  figure img,
+  figure video {
+    width: 100%;
+    max-height: none;
   }
 }
 

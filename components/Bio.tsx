@@ -159,7 +159,11 @@ function ProjectLine({
   return (
     <div
       className={`project${isOpen ? " is-open" : ""}${stateClass}`}
-      style={{ "--reveal-delay": `${revealDelay ?? 0}ms` } as React.CSSProperties}
+      style={
+        {
+          "--reveal-delay": `${revealDelay ?? 0}ms`,
+        } as React.CSSProperties
+      }
     >
       <p className="line">
         <button
