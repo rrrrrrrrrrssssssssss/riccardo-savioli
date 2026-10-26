@@ -1229,12 +1229,73 @@
           "src": "/projects/radar-ep-antimonio/mvp9elea1dea.webp",
           "width": 900,
           "height": 900
+        },
+        {
+          "src": "/projects/radar-ep-antimonio/mvp9fn0k0lsd.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/radar-ep-antimonio/mvp9fvsvbnwo.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/radar-ep-antimonio/mvp9g3tboe80.webp",
+          "width": 900,
+          "height": 900
         }
       ]
     },
     "giacomo-moor-studio": {
-      "caption": "",
-      "images": []
+      "caption": "Project made in collaboration with Nicolò Oriani. Apr 2026.",
+      "images": [
+        {
+          "src": "/projects/giacomo-moor-studio/mvp9i7e7ehw9.webp",
+          "width": 600,
+          "height": 900
+        },
+        {
+          "src": "/projects/giacomo-moor-studio/mvp9i8957mpo.webp",
+          "width": 598,
+          "height": 900
+        },
+        {
+          "src": "/projects/giacomo-moor-studio/mvp9i8wt37xn.webp",
+          "width": 600,
+          "height": 900
+        },
+        {
+          "src": "/projects/giacomo-moor-studio/mvp9ib2x9it9.webp",
+          "width": 600,
+          "height": 900
+        },
+        {
+          "src": "/projects/giacomo-moor-studio/mvp9id9k6svn.webp",
+          "width": 600,
+          "height": 900
+        },
+        {
+          "src": "/projects/giacomo-moor-studio/mvp9ibofbi3o.webp",
+          "width": 600,
+          "height": 900
+        },
+        {
+          "src": "/projects/giacomo-moor-studio/mvp9icnjgdlw.webp",
+          "width": 600,
+          "height": 900
+        },
+        {
+          "src": "/projects/giacomo-moor-studio/mvp9ie614kzt.webp",
+          "width": 600,
+          "height": 900
+        },
+        {
+          "src": "/projects/giacomo-moor-studio/mvp9i9wwey7o.webp",
+          "width": 600,
+          "height": 900
+        }
+      ]
     },
     "quadro-design": {
       "caption": "",
