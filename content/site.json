@@ -1010,8 +1010,24 @@
       ]
     },
     "ernest-w-baker-calendar-2023": {
-      "caption": "",
-      "images": []
+      "caption": "Project realized in collaboration with Nicolò Oriani. Photography by Vladimir Kaminetsky. Printed in Dec 2022.",
+      "images": [
+        {
+          "src": "/projects/ernest-w-baker-calendar-2023/mvp8l4dhm53a.webp",
+          "width": 733,
+          "height": 900
+        },
+        {
+          "src": "/projects/ernest-w-baker-calendar-2023/mvp8l52u9wz7.webp",
+          "width": 733,
+          "height": 900
+        },
+        {
+          "src": "/projects/ernest-w-baker-calendar-2023/mvp8l6hlbyw3.webp",
+          "width": 734,
+          "height": 900
+        }
+      ]
     },
     "materia": {
       "caption": "",
