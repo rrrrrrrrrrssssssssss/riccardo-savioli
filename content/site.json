@@ -53,12 +53,12 @@
     {
       "type": "project",
       "slug": "martisor",
-      "label": "[Mărțișor] by Rebeca Margescu,"
+      "label": "Mărțișor by Rebeca Margescu,"
     },
     {
       "type": "project",
       "slug": "centolire-multitools",
-      "label": "[Centolire Multitools] by Luca A. Caizzi"
+      "label": "Centolire Multitools by Luca A. Caizzi"
     },
     {
       "type": "text",
@@ -67,7 +67,7 @@
     {
       "type": "project",
       "slug": "c41-magazine",
-      "label": "Redesign of [C41 Magazine]."
+      "label": "[Redesign of C41 Magazine]."
     },
     {
       "type": "text",
@@ -140,7 +140,7 @@
     {
       "type": "project",
       "slug": "radar-ep-antimonio",
-      "label": "[Radar EP] for Antimonio"
+      "label": "Radar EP for Antimonio"
     },
     {
       "type": "text",
