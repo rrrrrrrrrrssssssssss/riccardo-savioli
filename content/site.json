@@ -261,7 +261,62 @@
     },
     "asif": {
       "caption": "Project made in collaboration with Chiara Alexandra Young. Typographic system based on the Utopensium alphabet by Thomas More (1516). May 2026.\n",
-      "images": []
+      "images": [
+        {
+          "src": "/projects/asif/mvp2f9b3ca8n.mp4",
+          "width": 384,
+          "height": 480,
+          "video": true
+        },
+        {
+          "src": "/projects/asif/mvp2fpwdqji2.webp",
+          "width": 719,
+          "height": 900
+        },
+        {
+          "src": "/projects/asif/mvp2fw0hqsh9.mp4",
+          "width": 574,
+          "height": 720,
+          "video": true
+        },
+        {
+          "src": "/projects/asif/mvp2g7a7xim1.webp",
+          "width": 719,
+          "height": 900
+        },
+        {
+          "src": "/projects/asif/mvp2g9wrt1l4.webp",
+          "width": 719,
+          "height": 900
+        },
+        {
+          "src": "/projects/asif/mvp2gdrmlyh3.mp4",
+          "width": 574,
+          "height": 720,
+          "video": true
+        },
+        {
+          "src": "/projects/asif/mvp2gegfh44u.webp",
+          "width": 719,
+          "height": 900
+        },
+        {
+          "src": "/projects/asif/mvp2gh4cka69.webp",
+          "width": 719,
+          "height": 900
+        },
+        {
+          "src": "/projects/asif/mvp2gjj4zkuc.webp",
+          "width": 719,
+          "height": 900
+        },
+        {
+          "src": "/projects/asif/mvp2gotvrl8g.mp4",
+          "width": 574,
+          "height": 720,
+          "video": true
+        }
+      ]
     },
     "alias": {
       "caption": "",
