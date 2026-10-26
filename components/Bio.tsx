@@ -290,7 +290,9 @@ function ProjectLine({
 
 // Mobile: all the media of a project side by side with the page margin between them, moved by
 // swiping. Each swipe moves exactly one item: past SWIPE_DISTANCE of the width or faster than
-// SWIPE_SPEED it goes to the next/previous one, otherwise it springs back. Vertical swipes scroll
+// SWIPE_SPEED it goes to the next/previous one, otherwise it springs back. It loops: after the last
+// item comes the first again (and before the first, the last), using a copy of each at the ends
+// that the track slides onto before jumping back, unseen, to the real item. Vertical swipes scroll
 // the page as usual. The height follows the finger, blending between the two items involved.
 // Only the current item and its neighbours are loaded (just the first while closed).
 const NEAR = 1;
@@ -316,6 +318,7 @@ function Strip({
   const ref = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
   const resting = useRef(index); // the item the track currently rests on
+  const wrapTimer = useRef<number | undefined>(undefined);
   const gesture = useRef<{
     x: number;
     y: number;
@@ -325,19 +328,23 @@ function Strip({
     dragging: boolean;
   } | null>(null);
 
-  const last = images.length - 1;
-  const clamp = (n: number) => Math.min(Math.max(n, 0), last);
+  const count = images.length;
+  const loops = count > 1;
+  // Positions run from -1 (copy of the last item) to count (copy of the first) when looping.
+  const first = loops ? -1 : 0;
+  const end = loops ? count : count - 1;
+  const itemAt = (pos: number) => images[(pos + count) % count];
   const pitch = () =>
     ref.current!.clientWidth + (parseFloat(getComputedStyle(track.current!).columnGap) || 0);
   const heightAt = (pos: number) => {
     const w = ref.current!.clientWidth;
-    const p = clamp(pos);
+    const p = Math.min(Math.max(pos, first), end);
     const i = Math.floor(p);
-    const h = (k: number) => (w * images[k].height) / images[k].width;
-    return h(i) + (h(Math.min(i + 1, last)) - h(i)) * (p - i);
+    const h = (k: number) => (w * itemAt(k).height) / itemAt(k).width;
+    return h(i) + (h(Math.min(i + 1, end)) - h(i)) * (p - i);
   };
 
-  // Puts the track at a (possibly fractional) item position, sliding there or jumping.
+  // Puts the track at a (possibly fractional) position, sliding there or jumping.
   // Transform and height are set on the elements directly so they can follow the finger.
   const place = (pos: number, slide: boolean) => {
     const el = ref.current;
@@ -346,16 +353,27 @@ function Strip({
     const ease = `${SLIDE_DURATION}ms var(--ease)`;
     tr.style.transition = slide ? `transform ${ease}` : "none";
     el.style.transition = slide ? `height ${ease}` : "none";
-    tr.style.transform = `translate3d(${-pos * pitch()}px, 0, 0)`;
+    tr.style.transform = `translate3d(${-(pos - first) * pitch()}px, 0, 0)`;
     el.style.height = `${heightAt(pos)}px`;
   };
 
-  // New index (swipe, Back, Next, keys): slide there; wrapping around jumps instead.
+  // Slides onto the copy at one end, then jumps to the real item it stands for.
+  const slideAround = (copy: number, real: number) => {
+    place(copy, true);
+    wrapTimer.current = window.setTimeout(() => place(real, false), SLIDE_DURATION);
+  };
+
+  // New index (swipe, Back, Next, keys): slide there, the short way round when wrapping.
+  // Bigger jumps (reopening on another item) are instant.
   useLayoutEffect(() => {
-    const far = Math.abs(index - resting.current) > 1;
-    place(index, index !== resting.current && !far);
+    window.clearTimeout(wrapTimer.current);
+    const from = resting.current;
     resting.current = index;
+    if (loops && from === count - 1 && index === 0) slideAround(count, 0);
+    else if (loops && from === 0 && index === count - 1) slideAround(-1, count - 1);
+    else place(index, Math.abs(index - from) === 1);
   }, [index]);
+  useEffect(() => () => window.clearTimeout(wrapTimer.current), []);
 
   // Width changes (rotation, resize): re-place without animation.
   useLayoutEffect(() => {
@@ -369,27 +387,43 @@ function Strip({
     return () => observer.disconnect();
   }, []);
 
-  const end = (cancelled: boolean) => {
+  const release = (cancelled: boolean) => {
     const g = gesture.current;
     gesture.current = null;
     if (!g?.dragging) return;
     let target = index;
-    if (!cancelled) {
+    if (!cancelled && loops) {
       const w = ref.current!.clientWidth;
-      if (g.dx < -w * SWIPE_DISTANCE || g.speed < -SWIPE_SPEED) target = clamp(index + 1);
-      else if (g.dx > w * SWIPE_DISTANCE || g.speed > SWIPE_SPEED) target = clamp(index - 1);
+      if (g.dx < -w * SWIPE_DISTANCE || g.speed < -SWIPE_SPEED) target = (index + 1) % count;
+      else if (g.dx > w * SWIPE_DISTANCE || g.speed > SWIPE_SPEED)
+        target = (index - 1 + count) % count;
     }
     if (target !== index) onSelect(target);
     else place(index, true);
   };
 
+  // The real items, plus a copy of the last before them and of the first after them.
+  const slots = loops
+    ? [
+        { pos: -1, img: images[count - 1] },
+        ...images.map((img, i) => ({ pos: i, img })),
+        { pos: count, img: images[0] },
+      ]
+    : images.map((img, i) => ({ pos: i, img }));
   const near = isOpen ? NEAR : 0;
+
   return (
     <div
       ref={ref}
       className="strip"
       onPointerDown={(e) => {
         if (!e.isPrimary) return;
+        // A new touch during a wrap-around: settle on the real item first.
+        if (wrapTimer.current !== undefined) {
+          window.clearTimeout(wrapTimer.current);
+          wrapTimer.current = undefined;
+          place(index, false);
+        }
         gesture.current = {
           x: e.clientX,
           y: e.clientY,
@@ -418,23 +452,23 @@ function Strip({
         if (dt > 0) g.speed = 0.7 * ((dx - g.dx) / dt) + 0.3 * g.speed;
         g.dx = dx;
         g.t = e.timeStamp;
-        // Past the first and last item the strip resists.
+        // A single item resists being dragged; otherwise the copies at the ends take over.
         let pos = index - dx / pitch();
-        if (pos < 0) pos /= 3;
-        if (pos > last) pos = last + (pos - last) / 3;
+        if (pos < first) pos = first + (pos - first) / 3;
+        if (pos > end) pos = end + (pos - end) / 3;
         place(pos, false);
       }}
-      onPointerUp={() => end(false)}
-      onPointerCancel={() => end(true)}
+      onPointerUp={() => release(false)}
+      onPointerCancel={() => release(true)}
     >
       <div ref={track} className="track">
-        {images.map((img, i) => (
-          <div key={i} className="slide" style={{ aspectRatio: `${img.width} / ${img.height}` }}>
-            {Math.abs(i - index) <= near && (
+        {slots.map(({ pos, img }) => (
+          <div key={pos} className="slide" style={{ aspectRatio: `${img.width} / ${img.height}` }}>
+            {Math.abs(pos - index) <= near && (
               <MediaItem
                 image={img}
-                alt={`${label} — ${i + 1}/${images.length}`}
-                active={i === index}
+                alt={`${label} — ${((pos + count) % count) + 1}/${count}`}
+                active={pos === index}
                 onLoaded={onLoaded}
               />
             )}
