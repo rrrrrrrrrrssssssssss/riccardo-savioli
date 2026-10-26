@@ -110,6 +110,11 @@ button {
   }
 }
 
+/* Feedback on closing: the title turns red while the image fades out, then back to black. */
+.project.is-open.is-closing .title {
+  color: var(--accent);
+}
+
 .count {
   margin-left: 1.25em;
 }
@@ -206,42 +211,44 @@ figure {
   padding-top: 4px;
 }
 
-/* The media box always keeps the full height, so the caption and the text below never move
-   while an image loads or when images have different proportions. */
-.media {
-  height: var(--image-height);
-}
-
-/* Media keep their proportions: 294px tall, or narrower when that would exceed the max width. */
+/* Each photo or video has its own height, so the caption and the text below always keep the
+   designed distance from it. The height comes from the known proportions (--ratio, set in
+   components/Bio.tsx), so the space is right before the file has loaded.
+   Desktop: 294px tall, or lower when that would exceed a quarter of the screen width. */
 figure img,
 figure video {
   display: block;
   width: auto;
-  height: auto;
-  max-height: 100%;
-  max-width: 100%;
+  height: min(var(--image-height), calc(var(--image-max-width) * var(--ratio)));
   cursor: pointer;
 }
 
-@media (min-width: 768px) {
-  figure img,
-  figure video {
-    max-width: var(--image-max-width);
-  }
+/* Mobile: full width, swiped one at a time; the strip's height follows the current item. */
+.strip {
+  display: flex;
+  align-items: flex-start;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  transition: height 300ms var(--ease);
 }
 
-/* Mobile: media span the full width at their own height. The width/height attributes reserve
-   that space before the file loads, so nothing jumps while loading. */
-@media (max-width: 767px) {
-  .media {
-    height: auto;
-  }
+.strip::-webkit-scrollbar {
+  display: none;
+}
 
-  figure img,
-  figure video {
-    width: 100%;
-    max-height: none;
-  }
+.slide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.slide img,
+.slide video {
+  width: 100%;
+  height: auto;
 }
 
 .caption {
@@ -251,6 +258,8 @@ figure video {
   padding-bottom: 2px;
   width: calc(100% / var(--caption-scale));
   transform: scaleX(var(--caption-scale));
+  -webkit-text-size-adjust: none; /* never enlarged by mobile browsers */
+  text-size-adjust: none;
 }
 
 /* Real text for screen readers and search engines while the landing scramble runs. */

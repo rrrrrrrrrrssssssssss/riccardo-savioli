@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import type { Block, Project } from "@/lib/content";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { Block, Image, Project } from "@/lib/content";
 import { Scramble, ScrambleClock } from "./Scramble";
 
 // Keep in sync with app/globals.css: --open-duration, and the caption + image fade-out (--fade × 1.8).
@@ -89,6 +89,7 @@ export default function Bio({ blocks }: { blocks: Block[] }) {
               index={isOpen ? open.index : 0}
               onToggle={() => toggle(b.slug)}
               onStep={step}
+              onSelect={(index) => setOpen((o) => o && { ...o, index })}
             />
           );
         })}
@@ -105,6 +106,7 @@ function ProjectLine({
   index,
   onToggle,
   onStep,
+  onSelect,
 }: {
   label: string;
   project: Project;
@@ -113,7 +115,9 @@ function ProjectLine({
   index: number;
   onToggle: () => void;
   onStep: (delta: number) => void;
+  onSelect: (index: number) => void;
 }) {
+  const mobile = useMediaQuery("(max-width: 767px)");
   // Images load once the title is hovered or the project opened, not with the page.
   const [mounted, setMounted] = useState(false);
   // While closing, keep showing the last image so it can fade out.
@@ -141,7 +145,6 @@ function ProjectLine({
       setRevealDelay(Math.max(0, OPEN_DURATION - (performance.now() - openedAt.current)));
     }
   }, [isOpen, revealDelay, image, loadedSrc]);
-  const loaded = () => image && setLoadedSrc(image.src);
 
   // Preload the neighbouring photos so moving through the carousel doesn't wait for them.
   useEffect(() => {
@@ -158,7 +161,7 @@ function ProjectLine({
 
   return (
     <div
-      className={`project${isOpen ? " is-open" : ""}${stateClass}`}
+      className={`project${isOpen ? " is-open" : ""}${isOpen && isClosing ? " is-closing" : ""}${stateClass}`}
       style={
         {
           "--reveal-delay": `${revealDelay ?? 0}ms`,
@@ -209,31 +212,21 @@ function ProjectLine({
           {mounted && image && (
             <figure>
               <div className="media">
-                {image.video ? (
-                  <video
-                    key={image.src}
-                    src={image.src}
-                    width={image.width}
-                    height={image.height}
-                    muted
-                    loop
-                    autoPlay
-                    playsInline
-                    aria-label={`${label} — ${index + 1}/${total}`}
-                    onLoadedData={loaded}
-                    onError={loaded}
-                    onClick={() => onStep(1)}
+                {mobile ? (
+                  <Strip
+                    images={project.images}
+                    index={isOpen ? index : shown}
+                    label={label}
+                    onSelect={onSelect}
+                    onLoaded={setLoadedSrc}
                   />
                 ) : (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
+                  <MediaItem
                     key={image.src}
-                    src={image.src}
-                    width={image.width}
-                    height={image.height}
-                    alt={`${label} — ${index + 1}/${total}`}
-                    onLoad={loaded}
-                    onError={loaded}
+                    image={image}
+                    alt={`${label} — ${(isOpen ? index : shown) + 1}/${total}`}
+                    active
+                    onLoaded={setLoadedSrc}
                     onClick={() => onStep(1)}
                   />
                 )}
@@ -245,4 +238,144 @@ function ProjectLine({
       </div>
     </div>
   );
+}
+
+// Mobile: all the media of a project side by side, swiped one at a time. The counter follows the
+// swipe; Back, Next and the arrow keys scroll it. Its height follows the current item.
+function Strip({
+  images,
+  index,
+  label,
+  onSelect,
+  onLoaded,
+}: {
+  images: Image[];
+  index: number;
+  label: string;
+  onSelect: (index: number) => void;
+  onLoaded: (src: string) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+  useLayoutEffect(() => {
+    const el = ref.current!;
+    const observer = new ResizeObserver(() => setWidth(el.clientWidth));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const current = () => {
+    const el = ref.current!;
+    return Math.round(el.scrollLeft / el.clientWidth);
+  };
+
+  // Index changed from outside (Back, Next, keys): scroll there, instantly when wrapping around.
+  const last = useRef(index);
+  useEffect(() => {
+    const el = ref.current!;
+    if (current() !== index) {
+      const far = Math.abs(index - last.current) > 1;
+      el.scrollTo({ left: index * el.clientWidth, behavior: far ? "auto" : "smooth" });
+    }
+    last.current = index;
+  }, [index]);
+
+  const image = images[index];
+  const height = width && image ? (width * image.height) / image.width : undefined;
+
+  return (
+    <div
+      ref={ref}
+      className="strip"
+      style={{ height }}
+      onScroll={() => {
+        const i = current();
+        if (i !== index && images[i]) onSelect(i);
+      }}
+    >
+      {images.map((img, i) => (
+        <div key={i} className="slide">
+          <MediaItem
+            image={img}
+            alt={`${label} — ${i + 1}/${images.length}`}
+            active={i === index}
+            lazy={Math.abs(i - index) > 1}
+            onLoaded={onLoaded}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// One photo or silent looping video. Its box is sized from the known proportions (the --ratio
+// variable and the width/height attributes), so the layout is right before the file loads.
+function MediaItem({
+  image,
+  alt,
+  active,
+  lazy,
+  onLoaded,
+  onClick,
+}: {
+  image: Image;
+  alt: string;
+  active: boolean;
+  lazy?: boolean;
+  onLoaded: (src: string) => void;
+  onClick?: () => void;
+}) {
+  const video = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const v = video.current;
+    if (!v) return;
+    if (active) v.play().catch(() => {});
+    else v.pause();
+  }, [active]);
+
+  const style = { "--ratio": image.height / image.width } as React.CSSProperties;
+  const done = () => onLoaded(image.src);
+  return image.video ? (
+    <video
+      ref={video}
+      src={image.src}
+      width={image.width}
+      height={image.height}
+      style={style}
+      muted
+      loop
+      autoPlay={active}
+      playsInline
+      preload={lazy ? "metadata" : "auto"}
+      aria-label={alt}
+      onLoadedData={done}
+      onError={done}
+      onClick={onClick}
+    />
+  ) : (
+    /* eslint-disable-next-line @next/next/no-img-element */
+    <img
+      src={image.src}
+      width={image.width}
+      height={image.height}
+      style={style}
+      alt={alt}
+      loading={lazy ? "lazy" : "eager"}
+      onLoad={done}
+      onError={done}
+      onClick={onClick}
+    />
+  );
+}
+
+function useMediaQuery(query: string) {
+  const [matches, setMatches] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const update = () => setMatches(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, [query]);
+  return matches;
 }
