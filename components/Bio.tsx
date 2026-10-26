@@ -293,12 +293,14 @@ function ProjectLine({
 // SWIPE_SPEED it goes to the next/previous one, otherwise it springs back. It loops: after the last
 // item comes the first again (and before the first, the last), using a copy of each at the ends
 // that the track slides onto before jumping back, unseen, to the real item. Vertical swipes scroll
-// the page as usual. The height follows the finger, blending between the two items involved.
+// the page as usual. The text below stays still while dragging; on release the item and the height
+// move together, in one movement that starts fast and settles (SLIDE_EASE).
 // Only the current item and its neighbours are loaded (just the first while closed).
 const NEAR = 1;
 const SWIPE_DISTANCE = 0.2;
 const SWIPE_SPEED = 0.3; // px per ms
-const SLIDE_DURATION = 300;
+const SLIDE_DURATION = 350;
+const SLIDE_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 
 function Strip({
   images,
@@ -344,17 +346,17 @@ function Strip({
     return h(i) + (h(Math.min(i + 1, end)) - h(i)) * (p - i);
   };
 
-  // Puts the track at a (possibly fractional) position, sliding there or jumping.
-  // Transform and height are set on the elements directly so they can follow the finger.
-  const place = (pos: number, slide: boolean) => {
+  // Puts the track at a (possibly fractional) position, sliding there or jumping, with the height
+  // of the item at heightPos. Set on the elements directly so the track can follow the finger.
+  const place = (pos: number, slide: boolean, heightPos = pos) => {
     const el = ref.current;
     const tr = track.current;
     if (!el || !tr || !el.clientWidth) return;
-    const ease = `${SLIDE_DURATION}ms var(--ease)`;
+    const ease = `${SLIDE_DURATION}ms ${SLIDE_EASE}`;
     tr.style.transition = slide ? `transform ${ease}` : "none";
     el.style.transition = slide ? `height ${ease}` : "none";
     tr.style.transform = `translate3d(${-(pos - first) * pitch()}px, 0, 0)`;
-    el.style.height = `${heightAt(pos)}px`;
+    el.style.height = `${heightAt(heightPos)}px`;
   };
 
   // Slides onto the copy at one end, then jumps to the real item it stands for.
@@ -456,7 +458,7 @@ function Strip({
         let pos = index - dx / pitch();
         if (pos < first) pos = first + (pos - first) / 3;
         if (pos > end) pos = end + (pos - end) / 3;
-        place(pos, false);
+        place(pos, false, index);
       }}
       onPointerUp={() => release(false)}
       onPointerCancel={() => release(true)}
