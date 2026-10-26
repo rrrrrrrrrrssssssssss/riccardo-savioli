@@ -873,8 +873,80 @@
       ]
     },
     "acerbis": {
-      "caption": "",
-      "images": []
+      "caption": "Art direction by Studio Temp. Creative direction by Francesco Meda e David Lopez Quincoces. Web developing by Tilt. Apr 2021 — 2023.",
+      "images": [
+        {
+          "src": "/projects/acerbis/mvp6e49jm9z2.webp",
+          "width": 1765,
+          "height": 900
+        },
+        {
+          "src": "/projects/acerbis/mvp6e0yjubzz.mp4",
+          "width": 576,
+          "height": 720,
+          "video": true
+        },
+        {
+          "src": "/projects/acerbis/mvp6erqo5nle.webp",
+          "width": 643,
+          "height": 900
+        },
+        {
+          "src": "/projects/acerbis/mvp6eskr6b0r.webp",
+          "width": 643,
+          "height": 900
+        },
+        {
+          "src": "/projects/acerbis/mvp6etgoo2xa.webp",
+          "width": 600,
+          "height": 800
+        },
+        {
+          "src": "/projects/acerbis/mvp6eu22goi2.webp",
+          "width": 1200,
+          "height": 800
+        },
+        {
+          "src": "/projects/acerbis/mvp6f7v9px9y.webp",
+          "width": 600,
+          "height": 900
+        },
+        {
+          "src": "/projects/acerbis/mvp6f9qn6xsk.webp",
+          "width": 600,
+          "height": 900
+        },
+        {
+          "src": "/projects/acerbis/mvp6fbckmba1.webp",
+          "width": 600,
+          "height": 900
+        },
+        {
+          "src": "/projects/acerbis/mvp6fije4ycw.webp",
+          "width": 1588,
+          "height": 900
+        },
+        {
+          "src": "/projects/acerbis/mvp6gr98p3sz.webp",
+          "width": 833,
+          "height": 900
+        },
+        {
+          "src": "/projects/acerbis/mvp6hafxn25t.webp",
+          "width": 1475,
+          "height": 900
+        },
+        {
+          "src": "/projects/acerbis/mvp6hmf0ms1p.webp",
+          "width": 878,
+          "height": 900
+        },
+        {
+          "src": "/projects/acerbis/mvp6ib5nny2e.webp",
+          "width": 880,
+          "height": 900
+        }
+      ]
     },
     "american-haiku": {
       "caption": "",
