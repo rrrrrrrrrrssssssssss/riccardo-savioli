@@ -171,7 +171,22 @@ function ProjectLine({
         >
           <Scramble text={label} />
           <span className="count">
-            <Scramble text={isOpen ? `(${index + 1}/ ${total})` : `(${total})`} />
+            {isOpen ? (
+              // As wide as the widest counter of this project (invisible copies set the width),
+              // so Back and Next never move while the number changes.
+              <span className="count-box">
+                {project.images.map((_, k) => (
+                  <span key={k} className="count-sizer" aria-hidden="true">
+                    ({k + 1}/ {total})
+                  </span>
+                ))}
+                <span>
+                  <Scramble text={`(${index + 1}/ ${total})`} />
+                </span>
+              </span>
+            ) : (
+              <Scramble text={`(${total})`} />
+            )}
           </span>
         </button>
         {isOpen && total > 1 && (

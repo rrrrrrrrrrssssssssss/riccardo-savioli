@@ -97,6 +97,18 @@ button {
   margin-left: 1.25em;
 }
 
+.count-box {
+  display: inline-grid;
+}
+
+.count-box > * {
+  grid-area: 1 / 1;
+}
+
+.count-sizer {
+  visibility: hidden;
+}
+
 .nav {
   margin-left: 1em;
 }
