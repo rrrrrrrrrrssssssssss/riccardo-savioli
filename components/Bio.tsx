@@ -9,7 +9,7 @@ const OPEN_DURATION = 600;
 const CLOSE_FADE = 450;
 // If the first image is slow (bad connection), show the project anyway after this long;
 // the image then appears as soon as it arrives.
-const REVEAL_TIMEOUT = 1500;
+const REVEAL_TIMEOUT = 800;
 
 export default function Bio({ blocks }: { blocks: Block[] }) {
   const [open, setOpen] = useState<{ slug: string; index: number } | null>(null);
@@ -121,6 +121,7 @@ function ProjectLine({
   onSelect: (index: number) => void;
 }) {
   const mobile = useMediaQuery("(max-width: 767px)");
+  const lineRef = useRef<HTMLParagraphElement>(null);
   // Images load once the title is hovered or the project opened, not with the page.
   const [mounted, setMounted] = useState(false);
   // While closing, keep showing the last image so it can fade out.
@@ -132,6 +133,16 @@ function ProjectLine({
   }, [isOpen, index]);
 
   const total = project.images.length;
+
+  // Mobile has no hover: start loading the first image once the title is on screen.
+  useEffect(() => {
+    if (!mobile || mounted || !total) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) setMounted(true);
+    });
+    observer.observe(lineRef.current!);
+    return () => observer.disconnect();
+  }, [mobile, mounted, total]);
   const image = project.images[isOpen ? index : shown];
 
   // The image and caption fade in only once the image has loaded, and not before the text has
@@ -176,7 +187,7 @@ function ProjectLine({
         } as React.CSSProperties
       }
     >
-      <p className="line">
+      <p className="line" ref={lineRef}>
         <button
           className="title"
           onClick={onToggle}
@@ -222,6 +233,7 @@ function ProjectLine({
               <div className="media">
                 {mobile ? (
                   <Strip
+                    isOpen={isOpen}
                     images={project.images}
                     index={isOpen ? index : shown}
                     label={label}
@@ -249,32 +261,27 @@ function ProjectLine({
 }
 
 // Mobile: all the media of a project side by side, swiped one at a time, with the page margin
-// between them. Only the current item and its neighbours are loaded. When the swipe settles, the
-// counter and the height follow the current item; Back, Next and the arrow keys scroll it.
+// between them. Only the current item and its neighbours are loaded (just the first while closed).
+// The height follows the finger, blending between the two items being swiped; the counter changes
+// as soon as the next item is more than half in view. Back, Next and the arrow keys scroll it.
 const NEAR = 1;
-const SETTLE = 120;
 
 function Strip({
   images,
   index,
+  isOpen,
   label,
   onSelect,
   onLoaded,
 }: {
   images: Image[];
   index: number;
+  isOpen: boolean;
   label: string;
   onSelect: (index: number) => void;
   onLoaded: (src: string) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(0);
-  useLayoutEffect(() => {
-    const el = ref.current!;
-    const observer = new ResizeObserver(() => setWidth(el.clientWidth));
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   // Distance between two snap points: one item plus the gap.
   const pitch = () => {
@@ -282,6 +289,26 @@ function Strip({
     return el.clientWidth + (parseFloat(getComputedStyle(el).columnGap) || 0);
   };
   const current = () => Math.round(ref.current!.scrollLeft / pitch());
+
+  // Set directly on the element (not through React), so it can follow the swipe every frame.
+  const fit = () => {
+    const el = ref.current;
+    if (!el || !el.clientWidth) return;
+    const last = images.length - 1;
+    const pos = Math.min(Math.max(el.scrollLeft / pitch(), 0), last);
+    const i = Math.floor(pos);
+    const heightOf = (k: number) => (el.clientWidth * images[k].height) / images[k].width;
+    const a = heightOf(i);
+    const b = heightOf(Math.min(i + 1, last));
+    el.style.height = `${a + (b - a) * (pos - i)}px`;
+  };
+
+  useLayoutEffect(() => {
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(ref.current!);
+    return () => observer.disconnect();
+  });
 
   // Index changed from outside (Back, Next, keys): scroll there, instantly when wrapping around.
   const last = useRef(index);
@@ -293,27 +320,20 @@ function Strip({
     last.current = index;
   }, [index]);
 
-  // Swipe: report the new item only once scrolling has settled.
   const indexRef = useRef(index);
   indexRef.current = index;
-  const settle = useRef<number | undefined>(undefined);
   const onScroll = () => {
-    window.clearTimeout(settle.current);
-    settle.current = window.setTimeout(() => {
-      const i = current();
-      if (i !== indexRef.current && images[i]) onSelect(i);
-    }, SETTLE);
+    fit();
+    const i = current();
+    if (i !== indexRef.current && images[i]) onSelect(i);
   };
-  useEffect(() => () => window.clearTimeout(settle.current), []);
 
-  const image = images[index];
-  const height = width && image ? (width * image.height) / image.width : undefined;
-
+  const near = isOpen ? NEAR : 0;
   return (
-    <div ref={ref} className="strip" style={{ height }} onScroll={onScroll}>
+    <div ref={ref} className="strip" onScroll={onScroll}>
       {images.map((img, i) => (
         <div key={i} className="slide" style={{ aspectRatio: `${img.width} / ${img.height}` }}>
-          {Math.abs(i - index) <= NEAR && (
+          {Math.abs(i - index) <= near && (
             <MediaItem
               image={img}
               alt={`${label} — ${i + 1}/${images.length}`}

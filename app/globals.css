@@ -225,7 +225,8 @@ figure video {
   cursor: pointer;
 }
 
-/* Mobile: full width, swiped one at a time; the strip's height follows the current item. */
+/* Mobile: full width, swiped one at a time; the strip's height follows the swipe (set in
+   components/Bio.tsx). */
 .strip {
   display: flex;
   align-items: flex-start;
@@ -235,7 +236,6 @@ figure video {
   overscroll-behavior-x: contain;
   gap: var(--margin);
   scrollbar-width: none;
-  transition: height 300ms var(--ease);
 }
 
 .strip::-webkit-scrollbar {
