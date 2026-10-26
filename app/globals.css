@@ -313,3 +313,13 @@ figure video {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* Recurring glitch (components/Scramble.tsx): glyphs in red, letters grey for a moment on their
+   way back to black. Not affected by hover or link colours. */
+.glitch-glyph {
+  color: var(--accent);
+}
+
+.glitch-grey {
+  color: var(--muted);
+}
