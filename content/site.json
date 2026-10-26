@@ -319,8 +319,39 @@
       ]
     },
     "alias": {
-      "caption": "",
-      "images": []
+      "caption": "Art direction by Studio Temp. Creative direction by Francesco Meda e David Lopez Quincoces. Alias team: Alice Ricci, Silvia Chiarotto, Silvia Tiraboschi. Apr 2023 — 2025.",
+      "images": [
+        {
+          "src": "/projects/alias/mvp2txr331dh.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp2x334jifh.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp2xffnowf7.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp2xnddchaa.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp2xpgga199.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/alias/mvp2xshkwy63.webp",
+          "width": 900,
+          "height": 900
+        }
+      ]
     },
     "skylrk": {
       "caption": "",
