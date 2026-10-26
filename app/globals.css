@@ -225,33 +225,30 @@ figure video {
   cursor: pointer;
 }
 
-/* Mobile: full width, swiped one at a time; the strip's height follows the swipe (set in
-   components/Bio.tsx). */
+/* Mobile: full width, moved by swiping (see Strip in components/Bio.tsx, which also sets the
+   height and the track position). Vertical swipes still scroll the page. */
 .strip {
-  display: flex;
-  align-items: flex-start;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  overscroll-behavior-x: contain;
-  gap: var(--margin);
-  scrollbar-width: none;
+  overflow: hidden;
+  touch-action: pan-y;
 }
 
-.strip::-webkit-scrollbar {
-  display: none;
+.track {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--margin);
+  will-change: transform;
 }
 
 .slide {
   flex: 0 0 100%;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
 }
 
 .slide img,
 .slide video {
   width: 100%;
   height: auto;
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 .caption {

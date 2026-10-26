@@ -11,6 +11,28 @@ const CLOSE_FADE = 450;
 // the image then appears as soon as it arrives.
 const REVEAL_TIMEOUT = 800;
 
+// Mobile: scroll so the project being opened sits near the top of the screen, with two lines of
+// text above it, so its carousel doesn't open half off-screen.
+function bringToTop(slug: string) {
+  if (!window.matchMedia("(max-width: 767px)").matches) return;
+  const el = document.querySelector<HTMLElement>(`[data-slug="${CSS.escape(slug)}"]`);
+  if (!el) return;
+  let top = el.getBoundingClientRect().top + window.scrollY;
+  // A project above that collapses at the same moment will pull this one up by its panel height.
+  for (const other of document.querySelectorAll<HTMLElement>(".project.is-open")) {
+    if (other !== el && other.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) {
+      top -= other.querySelector(".panel")!.getBoundingClientRect().height;
+    }
+  }
+  const leading = parseFloat(getComputedStyle(el.querySelector(".line")!).lineHeight) || 20;
+  const target = Math.max(0, top - 2 * leading);
+  window.scrollTo({ top: target, behavior: "smooth" });
+  // Near the end of the page the target may only become reachable once the panel has opened.
+  window.setTimeout(() => {
+    if (Math.abs(window.scrollY - target) > 2) window.scrollTo({ top: target, behavior: "smooth" });
+  }, OPEN_DURATION);
+}
+
 export default function Bio({ blocks }: { blocks: Block[] }) {
   const [open, setOpen] = useState<{ slug: string; index: number } | null>(null);
   // The open project is fading out its caption and image before its panel collapses.
@@ -31,6 +53,7 @@ export default function Bio({ blocks }: { blocks: Block[] }) {
     window.clearTimeout(timer.current);
     if (!open) {
       setClosing(false);
+      bringToTop(slug);
       return setOpen({ slug, index: 0 });
     }
     if (open.slug === slug && closing) return setClosing(false); // reopened while fading out
@@ -38,6 +61,7 @@ export default function Bio({ blocks }: { blocks: Block[] }) {
     setClosing(true);
     timer.current = window.setTimeout(() => {
       setClosing(false);
+      if (next) bringToTop(next.slug);
       setOpen(next);
     }, CLOSE_FADE);
   };
@@ -85,6 +109,7 @@ export default function Bio({ blocks }: { blocks: Block[] }) {
           return (
             <ProjectLine
               key={b.slug}
+              slug={b.slug}
               label={b.label}
               project={b.project}
               isOpen={isOpen}
@@ -102,6 +127,7 @@ export default function Bio({ blocks }: { blocks: Block[] }) {
 }
 
 function ProjectLine({
+  slug,
   label,
   project,
   isOpen,
@@ -111,6 +137,7 @@ function ProjectLine({
   onStep,
   onSelect,
 }: {
+  slug: string;
   label: string;
   project: Project;
   isOpen: boolean;
@@ -180,6 +207,7 @@ function ProjectLine({
 
   return (
     <div
+      data-slug={slug}
       className={`project${isOpen ? " is-open" : ""}${isOpen && isClosing ? " is-closing" : ""}${stateClass}`}
       style={
         {
@@ -260,11 +288,15 @@ function ProjectLine({
   );
 }
 
-// Mobile: all the media of a project side by side, swiped one at a time, with the page margin
-// between them. Only the current item and its neighbours are loaded (just the first while closed).
-// The height follows the finger, blending between the two items being swiped; the counter changes
-// as soon as the next item is more than half in view. Back, Next and the arrow keys scroll it.
+// Mobile: all the media of a project side by side with the page margin between them, moved by
+// swiping. Each swipe moves exactly one item: past SWIPE_DISTANCE of the width or faster than
+// SWIPE_SPEED it goes to the next/previous one, otherwise it springs back. Vertical swipes scroll
+// the page as usual. The height follows the finger, blending between the two items involved.
+// Only the current item and its neighbours are loaded (just the first while closed).
 const NEAR = 1;
+const SWIPE_DISTANCE = 0.2;
+const SWIPE_SPEED = 0.3; // px per ms
+const SLIDE_DURATION = 300;
 
 function Strip({
   images,
@@ -282,67 +314,133 @@ function Strip({
   onLoaded: (src: string) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const track = useRef<HTMLDivElement>(null);
+  const resting = useRef(index); // the item the track currently rests on
+  const gesture = useRef<{
+    x: number;
+    y: number;
+    dx: number;
+    t: number;
+    speed: number;
+    dragging: boolean;
+  } | null>(null);
 
-  // Distance between two snap points: one item plus the gap.
-  const pitch = () => {
-    const el = ref.current!;
-    return el.clientWidth + (parseFloat(getComputedStyle(el).columnGap) || 0);
+  const last = images.length - 1;
+  const clamp = (n: number) => Math.min(Math.max(n, 0), last);
+  const pitch = () =>
+    ref.current!.clientWidth + (parseFloat(getComputedStyle(track.current!).columnGap) || 0);
+  const heightAt = (pos: number) => {
+    const w = ref.current!.clientWidth;
+    const p = clamp(pos);
+    const i = Math.floor(p);
+    const h = (k: number) => (w * images[k].height) / images[k].width;
+    return h(i) + (h(Math.min(i + 1, last)) - h(i)) * (p - i);
   };
-  const current = () => Math.round(ref.current!.scrollLeft / pitch());
 
-  // Set directly on the element (not through React), so it can follow the swipe every frame.
-  const fit = () => {
+  // Puts the track at a (possibly fractional) item position, sliding there or jumping.
+  // Transform and height are set on the elements directly so they can follow the finger.
+  const place = (pos: number, slide: boolean) => {
     const el = ref.current;
-    if (!el || !el.clientWidth) return;
-    const last = images.length - 1;
-    const pos = Math.min(Math.max(el.scrollLeft / pitch(), 0), last);
-    const i = Math.floor(pos);
-    const heightOf = (k: number) => (el.clientWidth * images[k].height) / images[k].width;
-    const a = heightOf(i);
-    const b = heightOf(Math.min(i + 1, last));
-    el.style.height = `${a + (b - a) * (pos - i)}px`;
+    const tr = track.current;
+    if (!el || !tr || !el.clientWidth) return;
+    const ease = `${SLIDE_DURATION}ms var(--ease)`;
+    tr.style.transition = slide ? `transform ${ease}` : "none";
+    el.style.transition = slide ? `height ${ease}` : "none";
+    tr.style.transform = `translate3d(${-pos * pitch()}px, 0, 0)`;
+    el.style.height = `${heightAt(pos)}px`;
   };
 
+  // New index (swipe, Back, Next, keys): slide there; wrapping around jumps instead.
   useLayoutEffect(() => {
-    fit();
-    const observer = new ResizeObserver(fit);
-    observer.observe(ref.current!);
-    return () => observer.disconnect();
-  });
-
-  // Index changed from outside (Back, Next, keys): scroll there, instantly when wrapping around.
-  const last = useRef(index);
-  useEffect(() => {
-    if (current() !== index) {
-      const far = Math.abs(index - last.current) > 1;
-      ref.current!.scrollTo({ left: index * pitch(), behavior: far ? "auto" : "smooth" });
-    }
-    last.current = index;
+    const far = Math.abs(index - resting.current) > 1;
+    place(index, index !== resting.current && !far);
+    resting.current = index;
   }, [index]);
 
-  const indexRef = useRef(index);
-  indexRef.current = index;
-  const onScroll = () => {
-    fit();
-    const i = current();
-    if (i !== indexRef.current && images[i]) onSelect(i);
+  // Width changes (rotation, resize): re-place without animation.
+  useLayoutEffect(() => {
+    let width = ref.current!.clientWidth;
+    const observer = new ResizeObserver(() => {
+      const w = ref.current!.clientWidth;
+      if (w !== width && !gesture.current?.dragging) place(resting.current, false);
+      width = w;
+    });
+    observer.observe(ref.current!);
+    return () => observer.disconnect();
+  }, []);
+
+  const end = (cancelled: boolean) => {
+    const g = gesture.current;
+    gesture.current = null;
+    if (!g?.dragging) return;
+    let target = index;
+    if (!cancelled) {
+      const w = ref.current!.clientWidth;
+      if (g.dx < -w * SWIPE_DISTANCE || g.speed < -SWIPE_SPEED) target = clamp(index + 1);
+      else if (g.dx > w * SWIPE_DISTANCE || g.speed > SWIPE_SPEED) target = clamp(index - 1);
+    }
+    if (target !== index) onSelect(target);
+    else place(index, true);
   };
 
   const near = isOpen ? NEAR : 0;
   return (
-    <div ref={ref} className="strip" onScroll={onScroll}>
-      {images.map((img, i) => (
-        <div key={i} className="slide" style={{ aspectRatio: `${img.width} / ${img.height}` }}>
-          {Math.abs(i - index) <= near && (
-            <MediaItem
-              image={img}
-              alt={`${label} — ${i + 1}/${images.length}`}
-              active={i === index}
-              onLoaded={onLoaded}
-            />
-          )}
-        </div>
-      ))}
+    <div
+      ref={ref}
+      className="strip"
+      onPointerDown={(e) => {
+        if (!e.isPrimary) return;
+        gesture.current = {
+          x: e.clientX,
+          y: e.clientY,
+          dx: 0,
+          t: e.timeStamp,
+          speed: 0,
+          dragging: false,
+        };
+      }}
+      onPointerMove={(e) => {
+        const g = gesture.current;
+        if (!g || !e.isPrimary) return;
+        const dx = e.clientX - g.x;
+        if (!g.dragging) {
+          if (Math.abs(dx) < 8) return;
+          if (Math.abs(e.clientY - g.y) > Math.abs(dx)) {
+            gesture.current = null; // a vertical scroll of the page
+            return;
+          }
+          g.dragging = true;
+          try {
+            ref.current!.setPointerCapture(e.pointerId);
+          } catch {}
+        }
+        const dt = e.timeStamp - g.t;
+        if (dt > 0) g.speed = 0.7 * ((dx - g.dx) / dt) + 0.3 * g.speed;
+        g.dx = dx;
+        g.t = e.timeStamp;
+        // Past the first and last item the strip resists.
+        let pos = index - dx / pitch();
+        if (pos < 0) pos /= 3;
+        if (pos > last) pos = last + (pos - last) / 3;
+        place(pos, false);
+      }}
+      onPointerUp={() => end(false)}
+      onPointerCancel={() => end(true)}
+    >
+      <div ref={track} className="track">
+        {images.map((img, i) => (
+          <div key={i} className="slide" style={{ aspectRatio: `${img.width} / ${img.height}` }}>
+            {Math.abs(i - index) <= near && (
+              <MediaItem
+                image={img}
+                alt={`${label} — ${i + 1}/${images.length}`}
+                active={i === index}
+                onLoaded={onLoaded}
+              />
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
