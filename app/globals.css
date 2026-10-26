@@ -138,6 +138,7 @@ figure video {
   font-size: var(--caption-size);
   line-height: var(--caption-leading);
   padding-top: 5px;
+  padding-bottom: 2px;
   width: calc(100% / var(--caption-scale));
   transform: scaleX(var(--caption-scale));
 }
