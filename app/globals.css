@@ -266,6 +266,22 @@ figure video {
   cursor: pointer;
 }
 
+/* Desktop: an arrow cursor shows that the left half goes back and the right half forward
+   (black arrow with a thin white edge, visible on dark and light images). */
+figure [data-half="left"] {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M25 16H7M14 9l-7 7 7 7' stroke='white' stroke-width='5'/%3E%3Cpath d='M25 16H7M14 9l-7 7 7 7' stroke='black' stroke-width='2'/%3E%3C/g%3E%3C/svg%3E")
+      16 16,
+    w-resize;
+}
+
+figure [data-half="right"] {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 16h18M18 9l7 7-7 7' stroke='white' stroke-width='5'/%3E%3Cpath d='M7 16h18M18 9l7 7-7 7' stroke='black' stroke-width='2'/%3E%3C/g%3E%3C/svg%3E")
+      16 16,
+    e-resize;
+}
+
 /* Mobile: full width, moved by swiping (see Strip in components/Bio.tsx, which also sets the
    height and the track position). Vertical swipes still scroll the page. */
 .strip {
