@@ -387,13 +387,19 @@ function ProjectLine({
             <figure>
               <div
                 className="media"
-                // Which half of the image the pointer is on (for the arrow cursor), kept on this
-                // wrapper so the next image shows the right arrow at once after a click.
+                // Desktop: this wrapper reaches the middle of the screen. Clicking the left half of
+                // the image goes back; the right half, or anywhere to the right of the image up to
+                // the middle of the screen, goes forward. The side under the pointer (for the
+                // arrow cursor) is kept here, so the next image shows the right arrow at once.
                 onMouseMove={(e) => {
                   const media = e.currentTarget.querySelector("img, video");
                   if (!mobile && media) {
-                    e.currentTarget.dataset.half = leftHalf(media, e.clientX) ? "left" : "right";
+                    e.currentTarget.dataset.half = backwards(media, e.clientX) ? "left" : "right";
                   }
+                }}
+                onClick={(e) => {
+                  const media = e.currentTarget.querySelector("img, video");
+                  if (!mobile && media) onStep(backwards(media, e.clientX) ? -1 : 1);
                 }}
               >
                 {mobile ? (
@@ -412,8 +418,6 @@ function ProjectLine({
                     alt={`${plainLabel} — ${(isOpen ? index : shown) + 1}/${total}`}
                     active
                     onLoaded={setLoadedSrc}
-                    // Left half goes back, right half goes forward.
-                    onClick={(e) => onStep(leftHalf(e.currentTarget, e.clientX) ? -1 : 1)}
                   />
                 )}
               </div>
@@ -653,13 +657,11 @@ function MediaItem({
   alt,
   active,
   onLoaded,
-  onClick,
 }: {
   image: Image;
   alt: string;
   active: boolean;
   onLoaded: (src: string) => void;
-  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
 }) {
   const video = useRef<HTMLVideoElement>(null);
   useEffect(() => {
@@ -687,7 +689,6 @@ function MediaItem({
       aria-label={alt}
       onLoadedMetadata={done}
       onError={done}
-      onClick={onClick}
     />
   ) : (
     /* eslint-disable-next-line @next/next/no-img-element */
@@ -701,14 +702,13 @@ function MediaItem({
       fetchPriority={active ? "high" : "low"}
       onLoad={done}
       onError={done}
-      onClick={onClick}
     />
   );
 }
 
-// Whether a pointer at clientX is on the left half of the element.
-function leftHalf(el: Element, clientX: number) {
-  const box = el.getBoundingClientRect();
+// Whether a click at clientX means "back": on the left half of the image.
+function backwards(media: Element, clientX: number) {
+  const box = media.getBoundingClientRect();
   return clientX < box.left + box.width / 2;
 }
 
