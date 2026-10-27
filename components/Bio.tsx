@@ -402,7 +402,11 @@ function ProjectLine({
                     alt={`${plainLabel} — ${(isOpen ? index : shown) + 1}/${total}`}
                     active
                     onLoaded={setLoadedSrc}
-                    onClick={() => onStep(1)}
+                    // Left half goes back, right half goes forward.
+                    onClick={(e) => {
+                      const box = e.currentTarget.getBoundingClientRect();
+                      onStep(e.clientX < box.left + box.width / 2 ? -1 : 1);
+                    }}
                   />
                 )}
               </div>
@@ -648,7 +652,7 @@ function MediaItem({
   alt: string;
   active: boolean;
   onLoaded: (src: string) => void;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
 }) {
   const video = useRef<HTMLVideoElement>(null);
   useEffect(() => {
