@@ -385,7 +385,17 @@ function ProjectLine({
         <div className="panel-inner">
           {mounted && image && (
             <figure>
-              <div className="media">
+              <div
+                className="media"
+                // Which half of the image the pointer is on (for the arrow cursor), kept on this
+                // wrapper so the next image shows the right arrow at once after a click.
+                onMouseMove={(e) => {
+                  const media = e.currentTarget.querySelector("img, video");
+                  if (!mobile && media) {
+                    e.currentTarget.dataset.half = leftHalf(media, e.clientX) ? "left" : "right";
+                  }
+                }}
+              >
                 {mobile ? (
                   <Strip
                     isOpen={isOpen}
@@ -402,11 +412,8 @@ function ProjectLine({
                     alt={`${plainLabel} — ${(isOpen ? index : shown) + 1}/${total}`}
                     active
                     onLoaded={setLoadedSrc}
-                    // Left half goes back, right half goes forward; the cursor shows which.
-                    onClick={(e) => onStep(leftHalf(e) ? -1 : 1)}
-                    onMouseMove={(e) => {
-                      e.currentTarget.dataset.half = leftHalf(e) ? "left" : "right";
-                    }}
+                    // Left half goes back, right half goes forward.
+                    onClick={(e) => onStep(leftHalf(e.currentTarget, e.clientX) ? -1 : 1)}
                   />
                 )}
               </div>
@@ -647,14 +654,12 @@ function MediaItem({
   active,
   onLoaded,
   onClick,
-  onMouseMove,
 }: {
   image: Image;
   alt: string;
   active: boolean;
   onLoaded: (src: string) => void;
   onClick?: (e: React.MouseEvent<HTMLElement>) => void;
-  onMouseMove?: (e: React.MouseEvent<HTMLElement>) => void;
 }) {
   const video = useRef<HTMLVideoElement>(null);
   useEffect(() => {
@@ -683,7 +688,6 @@ function MediaItem({
       onLoadedMetadata={done}
       onError={done}
       onClick={onClick}
-      onMouseMove={onMouseMove}
     />
   ) : (
     /* eslint-disable-next-line @next/next/no-img-element */
@@ -698,15 +702,14 @@ function MediaItem({
       onLoad={done}
       onError={done}
       onClick={onClick}
-      onMouseMove={onMouseMove}
     />
   );
 }
 
-// Whether the pointer is on the left half of the element.
-function leftHalf(e: React.MouseEvent<HTMLElement>) {
-  const box = e.currentTarget.getBoundingClientRect();
-  return e.clientX < box.left + box.width / 2;
+// Whether a pointer at clientX is on the left half of the element.
+function leftHalf(el: Element, clientX: number) {
+  const box = el.getBoundingClientRect();
+  return clientX < box.left + box.width / 2;
 }
 
 function useMediaQuery(query: string) {
