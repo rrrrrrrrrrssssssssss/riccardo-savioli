@@ -57,13 +57,18 @@ function revealProject(slug: string, images: Image[]) {
     target = Math.min(needed, top - margin);
   }
 
+  window.clearTimeout(releaseTimer); // a pending release must not undo this
   document.documentElement.style.minHeight = `${target + window.innerHeight}px`;
   window.scrollTo({ top: target, behavior: "smooth" });
 }
 
-// Gives the page back its own height once no project is open (after the panel has closed).
+// Gives the page back its own height once no project is open, after its panel has closed.
+let releaseTimer: number | undefined;
 function releaseRoom() {
-  document.documentElement.style.minHeight = "";
+  window.clearTimeout(releaseTimer);
+  releaseTimer = window.setTimeout(() => {
+    document.documentElement.style.minHeight = "";
+  }, OPEN_DURATION);
 }
 
 export default function Bio({ blocks }: { blocks: Block[] }) {
@@ -99,7 +104,7 @@ export default function Bio({ blocks }: { blocks: Block[] }) {
     timer.current = window.setTimeout(() => {
       setClosing(false);
       if (next) revealProject(next.slug, imagesOf(next.slug));
-      else window.setTimeout(releaseRoom, OPEN_DURATION);
+      else releaseRoom();
       setOpen(next);
     }, CLOSE_FADE);
   };
@@ -246,7 +251,7 @@ function ProjectLine({
       cancelAnimationFrame(frame);
     };
   }, []);
-  // Images load once the title is hovered or the project opened, not with the page.
+  // Images load once the line is hovered or the project opened, not with the page.
   const [mounted, setMounted] = useState(false);
   // While closing, keep showing the last image so it can fade out.
   const [shown, setShown] = useState(index);
@@ -318,6 +323,7 @@ function ProjectLine({
       <p
         className={`line${total ? " is-toggle" : ""}`}
         ref={lineRef}
+        onMouseEnter={() => total && setMounted(true)}
         onClick={(e) => {
           if (total && !(e.target as Element).closest(".navs")) onToggle();
         }}
@@ -335,7 +341,6 @@ function ProjectLine({
               onToggle();
             }
           }}
-          onMouseEnter={() => total && setMounted(true)}
         >
           <span ref={labelRef}>
             {before && <Plain text={before} />}

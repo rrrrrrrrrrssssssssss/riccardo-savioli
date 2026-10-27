@@ -1,17 +1,10 @@
 import { NextResponse } from "next/server";
 import type { Site } from "@/lib/content";
-import { StaleContentError, commitSite, readSite } from "@/lib/github";
+import { StaleContentError, commitSite } from "@/lib/github";
 
-// Photos and videos live in public/projects/<slug>/<file>.<ext> and are referenced as /projects/<slug>/<file>.<ext>.
+// Photos and videos live in public/projects/<slug>/<file>.<ext>
+// and are referenced as /projects/<slug>/<file>.<ext>.
 const PHOTO = /^public\/projects\/[a-z0-9-]+\/[a-z0-9-]+\.(jpg|webp|mp4)$/;
-
-export async function GET() {
-  try {
-    return NextResponse.json(await readSite());
-  } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 });
-  }
-}
 
 export async function POST(req: Request) {
   const { site, added, removed, baseSha } = (await req.json()) as {
