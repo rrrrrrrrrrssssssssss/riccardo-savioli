@@ -38,17 +38,7 @@ function revealProject(slug: string, images: Image[]) {
   if (mobile) {
     target = Math.max(0, top - 2 * leading);
   } else {
-    // Same sizing as figure img in app/globals.css: 294px tall, 20–37% of the screen wide.
-    const vw = window.innerWidth;
-    const imageHeight = parseFloat(css.getPropertyValue("--image-height")) || 294;
-    const tallest = Math.max(
-      0,
-      ...images.map((img) => {
-        const ratio = img.height / img.width;
-        const width = Math.min(Math.max(0.2 * vw, imageHeight / ratio), 0.37 * vw);
-        return width * ratio;
-      }),
-    );
+    const tallest = Math.max(0, ...images.map(desktopHeight));
     const caption = el.querySelector<HTMLElement>(".caption")?.offsetHeight ?? 3 * leading;
     const bottom =
       top + el.querySelector<HTMLElement>(".line")!.offsetHeight + 4 + tallest + caption;
@@ -60,6 +50,16 @@ function revealProject(slug: string, images: Image[]) {
   window.clearTimeout(releaseTimer); // a pending release must not undo this
   document.documentElement.style.minHeight = `${target + window.innerHeight}px`;
   window.scrollTo({ top: target, behavior: "smooth" });
+}
+
+// Height of an image on desktop: the same sizing as figure img in app/globals.css (294px tall,
+// but 20–37% of the screen wide).
+function desktopHeight(img: Image) {
+  const vw = window.innerWidth;
+  const css = getComputedStyle(document.documentElement);
+  const imageHeight = parseFloat(css.getPropertyValue("--image-height")) || 294;
+  const ratio = img.height / img.width;
+  return Math.min(Math.max(0.2 * vw, imageHeight / ratio), 0.37 * vw) * ratio;
 }
 
 // Gives the page back its own height once no project is open, after its panel has closed.
@@ -192,6 +192,7 @@ function ProjectLine({
 }) {
   const mobile = useMediaQuery("(max-width: 767px)");
   const lineRef = useRef<HTMLParagraphElement>(null);
+  const mediaRef = useRef<HTMLDivElement>(null);
   const labelRef = useRef<HTMLSpanElement>(null);
   const countRef = useRef<HTMLSpanElement>(null);
   const navsRef = useRef<HTMLSpanElement>(null);
@@ -296,6 +297,37 @@ function ProjectLine({
     return () => window.clearTimeout(timer);
   }, [isOpen, revealDelay]);
 
+  // Desktop: moving through the carousel, the media area eases to the height of the new image, so
+  // the caption and the text below move smoothly, as on mobile (same duration and curve).
+  const shownHeight = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const el = mediaRef.current;
+    if (!el) return;
+    if (mobile || !image) {
+      el.style.height = el.style.transition = "";
+      shownHeight.current = null;
+      return;
+    }
+    const height = desktopHeight(image);
+    const animate = shownHeight.current !== null && isOpen;
+    el.style.transition = animate ? `height ${SLIDE_DURATION}ms ${SLIDE_EASE}` : "none";
+    el.style.height = `${height}px`;
+    shownHeight.current = height;
+  });
+  useEffect(() => {
+    // A new window size changes the sizes: follow at once, without animating.
+    const resize = () => {
+      const el = mediaRef.current;
+      if (!el || !shownHeight.current || window.matchMedia("(max-width: 767px)").matches) return;
+      const img = el.querySelector("img, video");
+      if (!img) return;
+      el.style.transition = "none";
+      el.style.height = `${img.getBoundingClientRect().height}px`;
+    };
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
   // Preload the neighbouring photos so moving through the carousel doesn't wait for them.
   useEffect(() => {
     if (!isOpen) return;
@@ -386,6 +418,7 @@ function ProjectLine({
           {mounted && image && (
             <figure>
               <div
+                ref={mediaRef}
                 className="media"
                 // Desktop: this wrapper reaches the middle of the screen. Clicking the left half of
                 // the image goes back; the right half, or anywhere to the right of the image up to

@@ -271,6 +271,7 @@ figure video {
 @media (min-width: 768px) {
   .media {
     width: calc(50vw - var(--margin));
+    overflow: hidden; /* its height eases to each new image (components/Bio.tsx) */
   }
 }
 
