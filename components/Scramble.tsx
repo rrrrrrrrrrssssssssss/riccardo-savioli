@@ -25,11 +25,13 @@ const GLITCH_HOLD = 250;
 const GLITCH_BACK = 500;
 const GLITCH = GLITCH_OUT + GLITCH_HOLD + GLITCH_BACK + GREY;
 
-// Idle: after IDLE ms without any activity, the letters disappear one by one within VANISH ms (open
-// images and captions fade out too). On the next activity they come back: each appears as a red
-// glyph within WAKE_IN ms, they hold for WAKE_HOLD ms, then turn into letters within WAKE_BACK ms.
+// Idle: after IDLE ms without any activity, the text is deleted from its last character back to the
+// first, like holding the backspace key, within VANISH ms (open images and captions fade out too).
+// On the next activity it comes back: each character appears as a red glyph within WAKE_IN ms,
+// they hold for WAKE_HOLD ms, then turn into letters within WAKE_BACK ms. The click, tap or key
+// press that wakes the page only does that: it doesn't open projects or follow links.
 const IDLE = 40_000;
-const VANISH = 1200;
+const VANISH = 3000;
 const WAKE_IN = 400;
 const WAKE_HOLD = 200;
 const WAKE_BACK = 600;
@@ -43,6 +45,19 @@ type Anim =
   | null;
 
 const Clock = createContext<Anim>(null);
+
+// Reading-order position of the first character of each piece of text, numbered when the deletion
+// starts, so the whole page can be deleted from its end back to its start.
+const positions = new WeakMap<Element, number>();
+let totalCharacters = 1;
+function numberCharacters() {
+  let n = 0;
+  for (const el of document.querySelectorAll<HTMLElement>("[data-scramble]")) {
+    positions.set(el, n);
+    n += Number(el.dataset.scramble);
+  }
+  totalCharacters = Math.max(n, 1);
+}
 export function ScrambleClock({ children }: { children: React.ReactNode }) {
   const [anim, setAnim] = useState<Anim>({ kind: "landing", id: 0, t: 0 });
   const current = useRef<Anim>(anim);
@@ -62,6 +77,7 @@ export function ScrambleClock({ children }: { children: React.ReactNode }) {
     const play = (kind: Exclude<Anim, null>["kind"], duration: number) => {
       const id = ++ids;
       const start = performance.now();
+      current.current = { kind, id, t: 0 };
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(function tick(now) {
         const t = now - start;
@@ -88,18 +104,45 @@ export function ScrambleClock({ children }: { children: React.ReactNode }) {
 
     // Idle: vanish after IDLE ms without activity; come back on the next one.
     let lastActivity = performance.now();
-    const onActivity = () => {
+    let swallowClick = false;
+    const wake = () => {
       lastActivity = performance.now();
-      if (current.current?.kind === "vanish") play("wake", WAKE);
+      if (current.current?.kind !== "vanish") return false;
+      play("wake", WAKE);
+      return true;
     };
-    const events = ["pointermove", "pointerdown", "keydown", "wheel", "touchstart", "scroll"];
-    for (const e of events) window.addEventListener(e, onActivity, { passive: true });
+    const onActivity = () => {
+      wake();
+    };
+    // A press that wakes the page must not also act on it: the click it produces is cancelled.
+    const onPress = () => {
+      swallowClick = wake();
+    };
+    const onClick = (e: Event) => {
+      if (!swallowClick) return;
+      swallowClick = false;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    const onKey = (e: Event) => {
+      if (!wake()) return;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    const passive = ["pointermove", "wheel", "scroll"];
+    for (const e of passive) window.addEventListener(e, onActivity, { passive: true });
+    // Capture phase, so these run before the page's own handlers.
+    window.addEventListener("pointerdown", onPress, true);
+    window.addEventListener("touchstart", onPress, true);
+    window.addEventListener("click", onClick, true);
+    window.addEventListener("keydown", onKey, true);
     const idleCheck = window.setInterval(() => {
       if (
         current.current === null &&
         !document.hidden &&
         performance.now() - lastActivity >= IDLE
       ) {
+        numberCharacters();
         play("vanish", VANISH);
       }
     }, 1000);
@@ -108,7 +151,11 @@ export function ScrambleClock({ children }: { children: React.ReactNode }) {
       cancelAnimationFrame(frame);
       window.clearTimeout(glitchTimer);
       window.clearInterval(idleCheck);
-      for (const e of events) window.removeEventListener(e, onActivity);
+      for (const e of passive) window.removeEventListener(e, onActivity);
+      window.removeEventListener("pointerdown", onPress, true);
+      window.removeEventListener("touchstart", onPress, true);
+      window.removeEventListener("click", onClick, true);
+      window.removeEventListener("keydown", onKey, true);
     };
   }, []);
 
@@ -139,6 +186,7 @@ type CharState = "letter" | "glyph" | "grey" | "hidden";
 
 export function Scramble({ text }: { text: string }) {
   const anim = useContext(Clock);
+  const ref = useRef<HTMLSpanElement>(null);
 
   // The landing's first frame is rendered on the server too, so its glyphs are seeded.
   const [landingGlyphs, setLandingGlyphs] = useState(() =>
@@ -155,7 +203,7 @@ export function Scramble({ text }: { text: string }) {
   const round = useMemo(
     () => ({
       glyphs: randomGlyphs(text),
-      outAt: randomTimes(text, 0, anim?.kind === "vanish" ? VANISH : GLITCH_OUT),
+      outAt: randomTimes(text, 0, GLITCH_OUT),
       backAt: randomTimes(text, GLITCH_OUT + GLITCH_HOLD, GLITCH_BACK),
       inAt: randomTimes(text, 0, WAKE_IN),
       wakeBackAt: randomTimes(text, WAKE_IN + WAKE_HOLD, WAKE_BACK),
@@ -163,7 +211,14 @@ export function Scramble({ text }: { text: string }) {
     [text, animId], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  if (!anim) return text;
+  // Every piece of text is wrapped, so the deletion can find it in reading order.
+  const wrap = (content: React.ReactNode) => (
+    <span ref={ref} data-scramble={text.length}>
+      {content}
+    </span>
+  );
+  if (!anim) return wrap(text);
+  const first = positions.get(ref.current!) ?? 0;
 
   // A red glyph until `until`, then the letter in grey for a moment, then the plain letter.
   const backFrom = (t: number, until: number): CharState =>
@@ -177,8 +232,11 @@ export function Scramble({ text }: { text: string }) {
         return backFrom(t, revealAt[i]);
       case "glitch":
         return t < round.outAt[i] ? "letter" : backFrom(t, round.backAt[i]);
-      case "vanish":
-        return t < round.outAt[i] ? "letter" : "hidden";
+      case "vanish": {
+        // Deleted from the end of the page back to its start.
+        const fromEnd = totalCharacters - 1 - (first + i);
+        return t < (fromEnd / totalCharacters) * VANISH ? "letter" : "hidden";
+      }
       case "wake":
         return t < round.inAt[i] ? "hidden" : backFrom(t, round.wakeBackAt[i]);
     }
@@ -196,7 +254,7 @@ export function Scramble({ text }: { text: string }) {
     else runs.push({ state, text: char });
   });
 
-  return (
+  return wrap(
     <>
       <span aria-hidden="true">
         {runs.map((run, k) =>
@@ -210,6 +268,6 @@ export function Scramble({ text }: { text: string }) {
         )}
       </span>
       <span className="sr-only">{text}</span>
-    </>
+    </>,
   );
 }
