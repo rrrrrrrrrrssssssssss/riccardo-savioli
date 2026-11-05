@@ -450,6 +450,7 @@ function ProjectLine({
                     image={image}
                     alt={`${plainLabel} — ${(isOpen ? index : shown) + 1}/${total}`}
                     active
+                    visible={isOpen}
                     onLoaded={setLoadedSrc}
                   />
                 )}
@@ -673,6 +674,7 @@ function Strip({
                 image={img}
                 alt={`${label} — ${((pos + count) % count) + 1}/${count}`}
                 active={pos === index}
+                visible={isOpen}
                 onLoaded={onLoaded}
               />
             )}
@@ -685,24 +687,45 @@ function Strip({
 
 // One photo or silent looping video. Its box is sized from the known proportions (the --ratio
 // variable and the width/height attributes), so the layout is right before the file loads.
+// A video plays only while it is the current item of an open project (visible), not while it is
+// preloaded in a closed one: phones block or pause videos that start hidden.
 function MediaItem({
   image,
   alt,
   active,
+  visible,
   onLoaded,
 }: {
   image: Image;
   alt: string;
   active: boolean;
+  visible: boolean;
   onLoaded: (src: string) => void;
 }) {
   const video = useRef<HTMLVideoElement>(null);
+  // React sets "muted" only as a property; Safari on iPhone checks the attribute before letting a
+  // video play by itself.
+  useLayoutEffect(() => {
+    const v = video.current;
+    if (!v) return;
+    v.muted = v.defaultMuted = true;
+    v.setAttribute("muted", "");
+  }, []);
+  const playing = active && visible;
   useEffect(() => {
     const v = video.current;
     if (!v) return;
-    if (active) v.play().catch(() => {});
-    else v.pause();
-  }, [active]);
+    if (!playing) return v.pause();
+    // If the browser still refuses (e.g. iPhone in Low Power Mode), start at the next tap or key.
+    const retry = () => v.play().catch(() => {});
+    const events = ["pointerdown", "touchend", "keydown"];
+    v.play().catch(() => {
+      for (const e of events) window.addEventListener(e, retry, { once: true, passive: true });
+    });
+    return () => {
+      for (const e of events) window.removeEventListener(e, retry);
+    };
+  }, [playing]);
 
   const style = { "--ratio": image.height / image.width } as React.CSSProperties;
   const done = () => onLoaded(image.src);
@@ -716,7 +739,6 @@ function MediaItem({
       style={style}
       muted
       loop
-      autoPlay={active}
       playsInline
       preload={active ? "auto" : "metadata"}
       aria-label={alt}
