@@ -140,11 +140,16 @@
     {
       "type": "project",
       "slug": "radar-ep-antimonio",
-      "label": "Radar EP for Antimonio"
+      "label": "[Radar EP for Antimonio], the"
+    },
+    {
+      "type": "project",
+      "slug": "p-mwm1dw9oajly",
+      "label": "[Enrico Sangiuliano Silence EP visuals and vinyl] and"
     },
     {
       "type": "text",
-      "text": "and worked on garments for"
+      "text": "worked on garments for"
     },
     {
       "type": "project",
@@ -1244,6 +1249,39 @@
           "src": "/projects/radar-ep-antimonio/mvp9g3tboe80.webp",
           "width": 900,
           "height": 900
+        }
+      ]
+    },
+    "p-mwm1dw9oajly": {
+      "caption": "Art direction by Studio Temp. Published by Ninetozero in April 2022.",
+      "images": [
+        {
+          "src": "/projects/p-mwm1dw9oajly/mwm1jfly3p70.mp4",
+          "width": 720,
+          "height": 720,
+          "video": true
+        },
+        {
+          "src": "/projects/p-mwm1dw9oajly/mwm1jgngtkev.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/p-mwm1dw9oajly/mwm1jhsizmln.webp",
+          "width": 900,
+          "height": 900
+        },
+        {
+          "src": "/projects/p-mwm1dw9oajly/mwm1jjvn5809.mp4",
+          "width": 576,
+          "height": 720,
+          "video": true
+        },
+        {
+          "src": "/projects/p-mwm1dw9oajly/mwm1jnahz3yr.mp4",
+          "width": 576,
+          "height": 720,
+          "video": true
         }
       ]
     },
