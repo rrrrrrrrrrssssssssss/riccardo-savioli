@@ -27,11 +27,18 @@ function revealProject(slug: string, images: Image[]) {
   const leading = parseFloat(getComputedStyle(el.querySelector(".line")!).lineHeight) || 20;
 
   let top = el.getBoundingClientRect().top + window.scrollY;
-  // A project above that collapses at the same moment will pull this one up by its panel height.
-  for (const other of document.querySelectorAll<HTMLElement>(".project.is-open")) {
-    if (other !== el && other.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) {
-      top -= other.querySelector(".panel")!.getBoundingClientRect().height;
-    }
+  // The project that closes at the same moment, if any. One above this one will pull it up by
+  // its panel height.
+  const closing = [...document.querySelectorAll<HTMLElement>(".project.is-open")].find(
+    (other) => other !== el,
+  );
+  const closingPanel = closing?.querySelector<HTMLElement>(".panel") ?? null;
+  if (
+    closing &&
+    closingPanel &&
+    closing.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING
+  ) {
+    top -= closingPanel.getBoundingClientRect().height;
   }
 
   let target: number;
@@ -43,11 +50,11 @@ function revealProject(slug: string, images: Image[]) {
     const bottom =
       top + el.querySelector<HTMLElement>(".line")!.offsetHeight + 4 + tallest + caption;
     const needed = bottom + margin - window.innerHeight;
-    if (needed <= window.scrollY) return;
+    if (needed <= window.scrollY) return releaseRoom(closingPanel);
     target = Math.min(needed, top - margin);
   }
 
-  window.clearTimeout(releaseTimer); // a pending release must not undo this
+  cancelAnimationFrame(roomFrame); // a release in progress must not undo this
   document.documentElement.style.minHeight = `${target + window.innerHeight}px`;
   window.scrollTo({ top: target, behavior: "smooth" });
 }
@@ -62,13 +69,28 @@ function desktopHeight(img: Image) {
   return Math.min(Math.max(0.2 * vw, imageHeight / ratio), 0.37 * vw) * ratio;
 }
 
-// Gives the page back its own height once no project is open, after its panel has closed.
-let releaseTimer: number | undefined;
-function releaseRoom() {
-  window.clearTimeout(releaseTimer);
-  releaseTimer = window.setTimeout(() => {
-    document.documentElement.style.minHeight = "";
-  }, OPEN_DURATION);
+// Gives the page back its own height when the project that needed the room closes. The page
+// scrolls back to where its shorter version ends together with the closing panel, with the same
+// duration and curve (--open-duration and --ease in app/globals.css), so it settles smoothly
+// instead of jumping when the room is removed.
+let roomFrame = 0;
+const ease = (p: number) => (p < 0.5 ? 4 * p * p * p : 1 - (-2 * p + 2) ** 3 / 2); // = --ease
+function releaseRoom(closingPanel: HTMLElement | null) {
+  cancelAnimationFrame(roomFrame);
+  const html = document.documentElement;
+  if (!html.style.minHeight) return;
+  const view = window.innerHeight;
+  const page = document.querySelector<HTMLElement>("main")?.offsetHeight ?? 0;
+  const from = window.scrollY;
+  const to = Math.min(from, Math.max(0, page - (closingPanel?.offsetHeight ?? 0) - view));
+  const t0 = performance.now();
+  roomFrame = requestAnimationFrame(function step(now) {
+    const p = Math.min(1, (now - t0) / OPEN_DURATION);
+    const y = from + (to - from) * ease(p);
+    html.style.minHeight = p < 1 ? `${y + view}px` : "";
+    window.scrollTo({ top: y, behavior: "instant" });
+    if (p < 1) roomFrame = requestAnimationFrame(step);
+  });
 }
 
 export default function Bio({ blocks }: { blocks: Block[] }) {
@@ -104,7 +126,7 @@ export default function Bio({ blocks }: { blocks: Block[] }) {
     timer.current = window.setTimeout(() => {
       setClosing(false);
       if (next) revealProject(next.slug, imagesOf(next.slug));
-      else releaseRoom();
+      else releaseRoom(document.querySelector(`[data-slug="${CSS.escape(open.slug)}"] .panel`));
       setOpen(next);
     }, CLOSE_FADE);
   };
